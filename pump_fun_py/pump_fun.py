@@ -98,7 +98,7 @@ def buy(mint_str, sol_in=0.01, slippage_decimal=.25):
 
         # Create and send transaction
         transaction = VersionedTransaction(compiled_message, [payer_keypair])
-        txn_sig = client.send_transaction(transaction, opts=TxOpts(skip_preflight=True, preflight_commitment="confirmed")).value
+        txn_sig = client.send_transaction(transaction, opts=TxOpts(skip_preflight=False, preflight_commitment="confirmed")).value
         print(txn_sig)
         
         # Confirm transaction
@@ -107,6 +107,8 @@ def buy(mint_str, sol_in=0.01, slippage_decimal=.25):
         
     except Exception as e:
         print(e)
+        # 问题: 错误处理仅打印错误信息，没有采取进一步的措施（如重试或记录日志）。
+        # TODO 建议: 实现更健全的错误处理机制，如记录日志、重试机制或通知系统管理员。
 
 def sell(mint_str, token_balance=None, slippage_decimal=.25):
     try:
@@ -196,7 +198,7 @@ def sell(mint_str, token_balance=None, slippage_decimal=.25):
 
         # Create and send transaction
         transaction = VersionedTransaction(compiled_message, [payer_keypair])
-        txn_sig = client.send_transaction(transaction, opts=TxOpts(skip_preflight=True, preflight_commitment="confirmed")).value
+        txn_sig = client.send_transaction(transaction, opts=TxOpts(skip_preflight=False, preflight_commitment="confirmed")).value
         print(txn_sig)
 
         # Confirm transaction
@@ -205,3 +207,5 @@ def sell(mint_str, token_balance=None, slippage_decimal=.25):
 
     except Exception as e:
         print(e)
+        # 问题: 错误处理仅打印错误信息，没有采取进一步的措施（如重试或记录日志）。
+        # TODO 建议: 实现更健全的错误处理机制，如记录日志、重试机制或通知系统管理员。
