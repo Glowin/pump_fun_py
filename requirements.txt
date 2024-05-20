@@ -1,0 +1,5 @@
+solana # 用于与 Solana 区块链进行交互的库。
+solders # Solana 的 Rust 绑定库，用于处理公钥、指令和交易等。
+requests # 用于发送 HTTP 请求，获取代币数据和确认交易。
+base58 # 用于处理 Base58 编码的密钥对。
+structlog # 用于结构化日志记录。
