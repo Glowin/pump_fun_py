@@ -93,7 +93,7 @@ def get_coin_list(sort='created_timestamp', order='DESC'):
         'includeNsfw': 'false',
     }
     retries = 0
-    max_retries = 10
+    max_retries = 30
     while retries < max_retries:
         try:
             response = requests.get('https://client-api-2-74b1891ee9f9.herokuapp.com/coins', params=params, headers=headers)
