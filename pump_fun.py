@@ -209,5 +209,3 @@ def sell(mint_str, token_balance=None, slippage_decimal=.25):
         print(e)
         # 问题: 错误处理仅打印错误信息，没有采取进一步的措施（如重试或记录日志）。
         # TODO 建议: 实现更健全的错误处理机制，如记录日志、重试机制或通知系统管理员。
-
-get_coin_list()

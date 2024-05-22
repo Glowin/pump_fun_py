@@ -26,7 +26,6 @@ class MySQLDatabase:
                 password=self.password,
                 database=self.database
             )
-            print("Connection to MySQL DB successful")
         except mysql.connector.Error as err:
             print(f"Error: '{err}'")
             self.connection = None
@@ -34,7 +33,6 @@ class MySQLDatabase:
     def disconnect(self):
         if self.connection:
             self.connection.close()
-            print("Disconnected from MySQL DB")
         else:
             print("Connection is already closed or not established")
     
@@ -99,8 +97,36 @@ class MySQLDatabase:
         try:
             cursor.execute(query, data)
             self.connection.commit()
-            print("Data inserted successfully into pump_fun_mint table")
+            print(f"{data['symbol']} inserted successfully into pump_fun_mint table")
             return True
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return False
+        finally:
+            cursor.close()
+
+    def check_mint_exists(self, mint):
+        """
+        Check if a mint exists in the pump_fun_mint table.
+        
+        Args:
+            mint (str): The mint value to check in the table.
+
+        Returns:
+            bool: True if mint exists, False otherwise.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return False
+
+        cursor = self.connection.cursor()
+        query = "SELECT COUNT(*) FROM pump_fun_mint WHERE mint = %s"
+        
+        try:
+            cursor.execute(query, (mint,))
+            result = cursor.fetchone()
+            exists = result[0] > 0
+            return exists
         except mysql.connector.Error as err:
             print(f"Error: '{err}'")
             return False

@@ -87,7 +87,7 @@ def get_coin_list(sort='created_timestamp', order='DESC'):
     }
     params = {
         'offset': '0',
-        'limit': '50',
+        'limit': '10',
         'sort': sort,
         'order': order,
         'includeNsfw': 'false',
@@ -100,6 +100,8 @@ def get_coin_list(sort='created_timestamp', order='DESC'):
             db.connect()
             for coin in coin_list:
                 try:
+                    if db.check_mint_exists(coin['mint']):
+                        continue
                     success = db.pump_fun_mint_insert(coin)
                 except Exception as e:
                     print(f"Error while inserting token data: {e}")
