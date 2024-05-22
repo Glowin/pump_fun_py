@@ -9,7 +9,7 @@ from solders.message import MessageV0 #type: ignore
 from config import payer_keypair, client
 from constants import *
 from solana.rpc.types import TokenAccountOpts
-from utils import get_coin_data, get_token_balance, confirm_txn
+from utils import get_coin_data, get_token_balance, confirm_txn, get_coin_list
 from solana.rpc.types import TxOpts
 
 def buy(mint_str, sol_in=0.01, slippage_decimal=.25):
@@ -209,3 +209,5 @@ def sell(mint_str, token_balance=None, slippage_decimal=.25):
         print(e)
         # 问题: 错误处理仅打印错误信息，没有采取进一步的措施（如重试或记录日志）。
         # TODO 建议: 实现更健全的错误处理机制，如记录日志、重试机制或通知系统管理员。
+
+get_coin_list()

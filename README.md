@@ -63,3 +63,42 @@ token_balance = get_token_balance()
 sell(mint_str=mint_str, token_balance=token_balance, slippage_decimal=.25)
 
 ```
+
+# init database
+
+``` sql
+CREATE TABLE juejin_data_engine (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    mint VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(255),
+    symbol VARCHAR(255),
+    description TEXT,
+    image_uri VARCHAR(255),
+    metadata_uri VARCHAR(255),
+    twitter VARCHAR(255),
+    telegram VARCHAR(255),
+    bonding_curve VARCHAR(255),
+    associated_bonding_curve VARCHAR(255),
+    creator VARCHAR(255),
+    created_timestamp BIGINT,
+    raydium_pool VARCHAR(255),
+    complete BOOLEAN,
+    virtual_sol_reserves BIGINT,
+    virtual_token_reserves BIGINT,
+    hidden BOOLEAN,
+    total_supply BIGINT,
+    website VARCHAR(255),
+    show_name BOOLEAN,
+    last_trade_timestamp BIGINT,
+    king_of_the_hill_timestamp BIGINT,
+    market_cap FLOAT,
+    reply_count INT,
+    last_reply VARCHAR(255),
+    nsfw BOOLEAN,
+    market_id VARCHAR(255),
+    inverted BOOLEAN,
+    username VARCHAR(255),
+    profile_image VARCHAR(255),
+    usd_market_cap FLOAT
+);
+```

@@ -4,6 +4,10 @@ import base58
 import requests
 from config import RPC, PUB_KEY, client
 from solana.transaction import Signature
+from db import MySQLDatabase
+
+# Initialize the database connection
+db = MySQLDatabase()
 
 def find_data(data, field):
     if isinstance(data, dict):
@@ -63,6 +67,50 @@ def get_coin_data(mint_str):
         return response.json()
     else:
         return None
+
+def get_coin_list(sort='created_timestamp', order='DESC'):
+    headers = {
+        'Accept': '*/*',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Origin': 'https://pump.fun',
+        'Pragma': 'no-cache',
+        'Referer': 'https://pump.fun/',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'cross-site',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"',
+    }
+    params = {
+        'offset': '0',
+        'limit': '50',
+        'sort': sort,
+        'order': order,
+        'includeNsfw': 'false',
+    }
+    response = requests.get('https://client-api-2-74b1891ee9f9.herokuapp.com/coins', params=params, headers=headers)
+    if response.status_code == 200:
+        try:
+            coin_list = response.json()
+            
+            db.connect()
+            for coin in coin_list:
+                try:
+                    success = db.pump_fun_mint_insert(coin)
+                except Exception as e:
+                    print(f"Error while inserting token data: {e}")
+                    return False
+            db.disconnect()
+        except ValueError as e:
+            print("Error parsing JSON response:", e)
+            return None
+    else:
+        return None
+    
 
 def confirm_txn(txn_sig, max_retries=20, retry_interval=3):
     retries = 0
