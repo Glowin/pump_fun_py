@@ -93,6 +93,10 @@ class MySQLDatabase:
             %(profile_image)s, %(usd_market_cap)s
         )
         """
+
+        for key in ['hidden', 'last_trade_timestamp', 'username', 'profile_image']:
+            if key not in data:
+                data[key] = None
         
         try:
             cursor.execute(query, data)

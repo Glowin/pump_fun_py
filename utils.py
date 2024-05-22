@@ -88,7 +88,7 @@ def get_coin_list(sort='created_timestamp', order='DESC'):
     params = {
         'offset': '0',
         'limit': '10',
-        'sort': sort,
+        'sort': sort, # last_trade_timestamp, last_reply, reply_count, market_cap, created_timestamp
         'order': order,
         'includeNsfw': 'false',
     }
