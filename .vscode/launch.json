@@ -1,0 +1,42 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Debug: pump_fun",
+            "type": "python",
+            "request": "launch",
+            "program": "pump_fun.py",
+            "args": [
+            ],
+            "console": "integratedTerminal",
+            "env": {
+            }
+        },
+        {
+            "name": "Debug: pump_fun_create_monitor",
+            "type": "python",
+            "request": "launch",
+            "program": "pump_fun_create_monitor.py",
+            "args": [
+                "--sort",
+                "created_timestamp",
+                "--order",
+                "DESC"
+            ],
+            "console": "integratedTerminal",
+            "env": {
+            }
+        }
+    ]
+}
