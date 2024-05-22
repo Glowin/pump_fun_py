@@ -10,4 +10,3 @@ args = parser.parse_args()
 
 while(1):
     get_coin_list(sort=args.sort, order=args.order)
-    time.sleep(1)

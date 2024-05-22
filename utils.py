@@ -92,7 +92,22 @@ def get_coin_list(sort='created_timestamp', order='DESC'):
         'order': order,
         'includeNsfw': 'false',
     }
-    response = requests.get('https://client-api-2-74b1891ee9f9.herokuapp.com/coins', params=params, headers=headers)
+    retries = 0
+    max_retries = 10
+    while retries < max_retries:
+        try:
+            response = requests.get('https://client-api-2-74b1891ee9f9.herokuapp.com/coins', params=params, headers=headers)
+            response.raise_for_status()  # Check for HTTP errors
+            break
+        except requests.exceptions.RequestException as e:
+            if isinstance(e, requests.exceptions.ConnectionError) and 'Connection aborted' in str(e):
+                retries += 1
+                print(f"Connection aborted. Retrying {retries}/{max_retries}...")
+                time.sleep(1)  # wait before retrying
+            else:
+                raise  # Raise other exceptions
+    else:
+        return None
     if response.status_code == 200:
         try:
             coin_list = response.json()
