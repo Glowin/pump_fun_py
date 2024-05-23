@@ -102,3 +102,19 @@ CREATE TABLE juejin_data_engine (
     usd_market_cap FLOAT
 );
 ```
+
+``` sql
+CREATE TABLE pump_fun_trade (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    signature VARCHAR(255) NOT NULL,
+    mint VARCHAR(255) NOT NULL,
+    sol_amount BIGINT NOT NULL,
+    token_amount BIGINT NOT NULL,
+    is_buy BOOLEAN NOT NULL,
+    user VARCHAR(255) NOT NULL,
+    timestamp BIGINT NOT NULL,
+    tx_index INT NOT NULL,
+    username VARCHAR(255),
+    profile_image VARCHAR(255)
+);
+```

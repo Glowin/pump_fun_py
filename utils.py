@@ -127,7 +127,48 @@ def get_coin_list(sort='created_timestamp', order='DESC'):
             return None
     else:
         return None
+
+def get_trade_list(mint):
+    headers = {
+        'Accept': '*/*',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Origin': 'https://pump.fun',
+        'Pragma': 'no-cache',
+        'Referer': 'https://pump.fun/',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'cross-site',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"',
+    }
+    url = f'https://client-api-2-74b1891ee9f9.herokuapp.com/trades/{mint}?limit=200&offset=0'
     
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        try:
+            trade_list = response.json()
+            
+            db.connect()
+            for trade in trade_list:
+                try:
+                    if db.check_trade_exists(trade['signature']):
+                        continue
+                    success = db.insert_trade(trade)
+                except Exception as e:
+                    print(f"Error while inserting trade data: {e}")
+                    return False
+            return True
+            db.disconnect()
+        except ValueError as e:
+            print("Error parsing JSON response:", e)
+            return None
+    else:
+        return None
 
 def confirm_txn(txn_sig, max_retries=20, retry_interval=3):
     retries = 0

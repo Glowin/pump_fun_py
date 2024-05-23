@@ -37,6 +37,32 @@
             "console": "integratedTerminal",
             "env": {
             }
+        },
+        {
+            "name": "Debug: last_trade_timestamp",
+            "type": "python",
+            "request": "launch",
+            "program": "pump_fun_create_monitor.py",
+            "args": [
+                "--sort",
+                "last_trade_timestamp",
+                "--order",
+                "DESC"
+            ],
+            "console": "integratedTerminal",
+            "env": {
+            }
+        },
+        {
+            "name": "Debug: trade_monitor",
+            "type": "python",
+            "request": "launch",
+            "program": "trade_monitor.py",
+            "args": [
+            ],
+            "console": "integratedTerminal",
+            "env": {
+            }
         }
     ]
 }

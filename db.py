@@ -137,6 +137,91 @@ class MySQLDatabase:
         finally:
             cursor.close()
 
+    def check_trade_exists(self, signature):
+        """
+        Check if a trade exists in the pump_fun_trade table.
+        
+        Args:
+            signature (str): The trade signature to check in the table.
+
+        Returns:
+            bool: True if trade exists, False otherwise.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return False
+
+        cursor = self.connection.cursor()
+        query = "SELECT COUNT(*) FROM pump_fun_trade WHERE signature = %s"
+        
+        try:
+            cursor.execute(query, (signature,))
+            result = cursor.fetchone()
+            exists = result[0] > 0
+            return exists
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return False
+        finally:
+            cursor.close()
+
+    def insert_trade(self, data):
+        """
+        Insert a trade record into the pump_fun_trade table.
+
+        Args:
+            data (dict): The trade data to insert into the table.
+
+        Returns:
+            bool: True if the insertion was successful, False otherwise.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return False
+
+        cursor = self.connection.cursor()
+        query = """
+            INSERT INTO pump_fun_trade (
+                signature, mint, sol_amount, token_amount, is_buy, user, 
+                timestamp, tx_index, username, profile_image
+            )
+            VALUES (%(signature)s, %(mint)s, %(sol_amount)s, %(token_amount)s, %(is_buy)s, %(user)s, %(timestamp)s, %(tx_index)s, %(username)s, %(profile_image)s)
+        """
+        
+        try:
+            cursor.execute(query, data)
+            self.connection.commit()
+            return True
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return False
+        finally:
+            cursor.close()
+
+    def get_rug_checklist(self):
+        """
+        Get a list of mints from the pump_fun_mint table where the rug field is NULL.
+        
+        Returns:
+            list: A list of mints where the rug field is NULL.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return []
+
+        cursor = self.connection.cursor()
+        query = "SELECT mint FROM pump_fun_mint WHERE rug IS NULL"
+
+        try:
+            cursor.execute(query)
+            result = cursor.fetchall()
+            return [row[0] for row in result]
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return []
+        finally:
+            cursor.close()
+
     def __del__(self):
         self.disconnect()
 
