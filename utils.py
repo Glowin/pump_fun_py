@@ -47,7 +47,7 @@ def get_token_balance(base_mint: str):
     except Exception as e:
         return None
 
-def get_coin_data(mint_str):
+def get_coin_data(mint_str, proxy):
     url = f"https://client-api-2-74b1891ee9f9.herokuapp.com/coins/{mint_str}"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
@@ -62,13 +62,21 @@ def get_coin_data(mint_str):
         "Sec-Fetch-Site": "cross-site",
         "If-None-Match": 'W/"43a-tWaCcS4XujSi30IFlxDCJYxkMKg"'
     }
+    if proxy:
+        proxies = {
+            'http': 'socks5://' + proxy,
+            'https': 'socks5://' + proxy,
+        }
+    else:
+        proxies = None
+
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         return response.json()
     else:
         return None
 
-def get_coin_list(sort='created_timestamp', order='DESC'):
+def get_coin_list(sort='created_timestamp', order='DESC', proxy=None):
     headers = {
         'Accept': '*/*',
         'Accept-Language': 'en-US,en;q=0.5',
@@ -92,6 +100,14 @@ def get_coin_list(sort='created_timestamp', order='DESC'):
         'order': order,
         'includeNsfw': 'false',
     }
+    if proxy:
+        proxies = {
+            'http': 'socks5://' + proxy,
+            'https': 'socks5://' + proxy,
+        }
+    else:
+        proxies = None
+
     retries = 0
     max_retries = 30
     while retries < max_retries:
@@ -128,7 +144,7 @@ def get_coin_list(sort='created_timestamp', order='DESC'):
     else:
         return None
 
-def get_trade_list(mint, creator, symbol):
+def get_trade_list(mint, creator, symbol, proxy):
     headers = {
         'Accept': '*/*',
         'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -146,7 +162,14 @@ def get_trade_list(mint, creator, symbol):
         'sec-ch-ua-platform': '"macOS"',
     }
     url = f'https://client-api-2-74b1891ee9f9.herokuapp.com/trades/{mint}?limit=200&offset=0'
-    
+    if proxy:
+        proxies = {
+            'http': 'socks5://' + proxy,
+            'https': 'socks5://' + proxy,
+        }
+    else:
+        proxies = None
+
     retries = 0
     max_retries = 10
     while retries < max_retries:
