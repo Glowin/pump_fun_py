@@ -1,5 +1,6 @@
 from db import MySQLDatabase
 from utils import get_trade_list
+import argparse
 
 # Establish a database connection
 db = MySQLDatabase()
