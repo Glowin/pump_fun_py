@@ -128,7 +128,7 @@ def get_coin_list(sort='created_timestamp', order='DESC'):
     else:
         return None
 
-def get_trade_list(mint):
+def get_trade_list(mint, creator, symbol):
     headers = {
         'Accept': '*/*',
         'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -147,13 +147,43 @@ def get_trade_list(mint):
     }
     url = f'https://client-api-2-74b1891ee9f9.herokuapp.com/trades/{mint}?limit=200&offset=0'
     
-    response = requests.get(url, headers=headers)
+    retries = 0
+    max_retries = 10
+    while retries < max_retries:
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                break
+        except requests.exceptions.RequestException as e:
+            retries += 1
+            print(f"Attempt {retries} failed: {e}. Retrying...")
+            time.sleep(1)
+    else:
+        response = None
     
     if response.status_code == 200:
         try:
             trade_list = response.json()
             
             db.connect()
+
+            # 如果 creator rug 了，则记录到数据库中
+            creator_buy_sol = sum(trade['sol_amount'] for trade in trade_list if trade['user'] == creator and trade['is_buy'] == 1)
+            creator_sell_sol = sum(trade['sol_amount'] for trade in trade_list if trade['user'] == creator and trade['is_buy'] == 0)
+            # Generate a list of users who have made buy trades (is_buy = 1)
+            buy_users = set(trade['user'] for trade in trade_list if trade['is_buy'] == 1)
+            # Calculate the sum of sol_amount for sell trades (is_buy = 0) where the user is not in the buy_user list
+            rat_sell_sol = sum(trade['sol_amount'] for trade in trade_list if trade['is_buy'] == 0 and trade['user'] not in buy_users)
+            if rat_sell_sol > 0:            
+                # Print the result for verification
+                print(f"Total rat sell sol amount: {rat_sell_sol}")
+            if (creator_sell_sol + rat_sell_sol) > creator_buy_sol * 0.5:
+                db.update_rug_status(mint, 1)
+                print(f"{symbol} rug!!!")
+            else:
+                db.update_rug_status(mint, 0)
+
+            # 记录每条交易到数据库中
             for trade in trade_list:
                 try:
                     if db.check_trade_exists(trade['signature']):

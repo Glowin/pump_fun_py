@@ -210,17 +210,109 @@ class MySQLDatabase:
             return []
 
         cursor = self.connection.cursor()
-        query = "SELECT mint FROM pump_fun_mint WHERE rug IS NULL"
+        query = "SELECT mint, creator, symbol FROM pump_fun_mint WHERE rug IS NULL OR rug = 0"
 
         try:
             cursor.execute(query)
             result = cursor.fetchall()
-            return [row[0] for row in result]
+            return [(row[0], row[1], row[2]) for row in result]
         except mysql.connector.Error as err:
             print(f"Error: '{err}'")
             return []
         finally:
             cursor.close()
+
+    def get_mints_with_null_or_zero_rug(self):
+        """
+        Get a list of tuples containing the symbol and creator from the pump_fun_mint table 
+        where the rug field is NULL or 0.
+
+        Returns:
+            list: A list of tuples (symbol, creator) where the rug field is NULL or 0.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return []
+
+        cursor = self.connection.cursor()
+        query = "SELECT symbol, creator FROM pump_fun_mint WHERE rug IS NULL OR rug = 0"
+
+        try:
+            cursor.execute(query)
+            result = cursor.fetchall()
+            return [(row[0], row[1]) for row in result]
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return []
+        finally:
+            cursor.close()
+
+    def get_trade_by_mint_and_creator(self, mint, creator):
+        """
+        Get a list of tuples containing the sol_amount and is_buy from the pump_fun_trade table 
+        where the mint is equal to the provided mint and the user is equal to the provided creator.
+
+        Args:
+            mint (str): The mint to search for.
+            creator (str): The creator(user) to search for.
+
+        Returns:
+            list: A list of tuples (sol_amount, is_buy) where the mint and user match the arguments.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return []
+
+        cursor = self.connection.cursor()
+        query = """
+            SELECT sol_amount, is_buy 
+            FROM pump_fun_trade 
+            WHERE mint = %s AND user = %s
+        """
+
+        try:
+            cursor.execute(query, (mint, creator))
+            result = cursor.fetchall()
+            return [(row[0], row[1]) for row in result]
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return []
+        finally:
+            cursor.close()
+
+    def update_rug_status(self, mint, rug_status):
+        """
+        Updates the rug status in the pump_fun_mint table for a given mint.
+
+        Args:
+            mint (str): The mint to update.
+            rug_status (bool): The new rug status to set.
+
+        Returns:
+            bool: True if the update was successful, False otherwise.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return False
+
+        cursor = self.connection.cursor()
+        query = """
+            UPDATE pump_fun_mint
+            SET rug = %s
+            WHERE mint = %s
+        """
+        try:
+            cursor.execute(query, (rug_status, mint))
+            self.connection.commit()
+            return True
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            self.connection.rollback()
+            return False
+        finally:
+            cursor.close()
+
+
 
     def __del__(self):
         self.disconnect()
