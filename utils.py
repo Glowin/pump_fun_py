@@ -64,8 +64,8 @@ def get_coin_data(mint_str, proxy):
     }
     if proxy:
         proxies = {
-            'http': 'socks5://' + proxy,
-            'https': 'socks5://' + proxy,
+            'http': 'socks5h://' + proxy,
+            'https': 'socks5h://' + proxy,
         }
     else:
         proxies = None
@@ -102,8 +102,8 @@ def get_coin_list(sort='created_timestamp', order='DESC', proxy=None):
     }
     if proxy:
         proxies = {
-            'http': 'socks5://' + proxy,
-            'https': 'socks5://' + proxy,
+            'http': 'socks5h://' + proxy,
+            'https': 'socks5h://' + proxy,
         }
     else:
         proxies = None
@@ -119,6 +119,7 @@ def get_coin_list(sort='created_timestamp', order='DESC', proxy=None):
             if 'Connection aborted' in str(e) or 'EOF occurred in violation of protocol' in str(e):
                 retries += 1
                 print(f"Connection issue. Retrying {retries}/{max_retries}...")
+                print(str(e))
                 time.sleep(1)  # wait before retrying
             else:
                 raise  # Raise other exceptions
@@ -164,8 +165,8 @@ def get_trade_list(mint, creator, symbol, proxy):
     url = f'https://client-api-2-74b1891ee9f9.herokuapp.com/trades/{mint}?limit=200&offset=0'
     if proxy:
         proxies = {
-            'http': 'socks5://' + proxy,
-            'https': 'socks5://' + proxy,
+            'http': 'socks5h://' + proxy,
+            'https': 'socks5h://' + proxy,
         }
     else:
         proxies = None
