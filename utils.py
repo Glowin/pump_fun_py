@@ -70,7 +70,7 @@ def get_coin_data(mint_str, proxy):
     else:
         proxies = None
 
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, proxies=proxies)
     if response.status_code == 200:
         return response.json()
     else:
@@ -112,7 +112,7 @@ def get_coin_list(sort='created_timestamp', order='DESC', proxy=None):
     max_retries = 30
     while retries < max_retries:
         try:
-            response = requests.get('https://client-api-2-74b1891ee9f9.herokuapp.com/coins', params=params, headers=headers)
+            response = requests.get('https://client-api-2-74b1891ee9f9.herokuapp.com/coins', params=params, headers=headers, proxies=proxies)
             response.raise_for_status()  # Check for HTTP errors
             break
         except requests.exceptions.RequestException as e:
@@ -174,7 +174,7 @@ def get_trade_list(mint, creator, symbol, proxy):
     max_retries = 10
     while retries < max_retries:
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, proxies=proxies)
             if response.status_code == 200:
                 break
         except requests.exceptions.RequestException as e:
