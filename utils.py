@@ -163,7 +163,7 @@ def get_trade_list(mint, creator, symbol, proxy):
         'sec-ch-ua-platform': '"macOS"',
     }
     url = f'https://client-api-2-74b1891ee9f9.herokuapp.com/trades/{mint}?limit=200&offset=0'
-    if proxy:
+    if proxy and proxy != 'None':
         proxies = {
             'http': 'socks5h://' + proxy,
             'https': 'socks5h://' + proxy,
@@ -175,15 +175,16 @@ def get_trade_list(mint, creator, symbol, proxy):
     max_retries = 10
     while retries < max_retries:
         try:
-            response = requests.get(url, headers=headers, proxies=proxies)
-            if response.status_code == 200:
-                break
+            response = requests.get(url, headers=headers, proxies=proxies, timeout=10)
+            response.raise_for_status()  # Check for HTTP errors
+            break
         except requests.exceptions.RequestException as e:
             retries += 1
             print(f"Attempt {retries} failed: {e}. Retrying...")
             time.sleep(1)
     else:
-        response = None
+        print("Max retries reached. Failed to fetch trade list.")
+        return None
     
     if response.status_code == 200:
         try:
