@@ -116,7 +116,12 @@ def get_coin_list(sort='created_timestamp', order='DESC', proxy=None):
             response.raise_for_status()  # Check for HTTP errors
             break
         except requests.exceptions.RequestException as e:
-            if 'Connection aborted' in str(e) or 'EOF occurred in violation of protocol' in str(e):
+            if response.status_code == 429:
+                retries += 1
+                backoff_time = 2 * retries
+                print(f"Rate limit exceeded. Retrying in {backoff_time} seconds...")
+                time.sleep(backoff_time)
+            elif 'Connection aborted' in str(e) or 'EOF occurred in violation of protocol' in str(e):
                 retries += 1
                 print(f"Connection issue. Retrying {retries}/{max_retries}...")
                 print(str(e))
