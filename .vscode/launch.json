@@ -32,7 +32,9 @@
                 "--sort",
                 "created_timestamp",
                 "--order",
-                "DESC"
+                "DESC",
+                "--proxy",
+                "127.0.0.1:10014"
             ],
             "console": "integratedTerminal",
             "env": {
@@ -59,6 +61,8 @@
             "request": "launch",
             "program": "trade_monitor.py",
             "args": [
+                "--proxy",
+                "127.0.0.1:10014"
             ],
             "console": "integratedTerminal",
             "env": {
