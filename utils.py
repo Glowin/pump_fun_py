@@ -121,7 +121,7 @@ def get_coin_list(sort='created_timestamp', order='DESC', proxy=None):
                 backoff_time = 2 * retries
                 print(f"Rate limit exceeded. Retrying in {backoff_time} seconds...")
                 time.sleep(backoff_time)
-            elif 'Connection aborted' in str(e) or 'EOF occurred in violation of protocol' in str(e):
+            elif 'Connection aborted' in str(e) or 'EOF occurred in violation of protocol' in str(e) or 'Max retries exceeded with url' in str(e):
                 retries += 1
                 print(f"Connection issue. Retrying {retries}/{max_retries}...")
                 print(str(e))
