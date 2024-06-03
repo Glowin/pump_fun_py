@@ -202,8 +202,12 @@ def get_trade_list(mint, creator, symbol, proxy):
                 # Print the result for verification
                 print(f"Total rat sell token amount: {rat_sell_token}")
             if (creator_sell_token + rat_sell_token) > creator_buy_token * 0.5:
-                db.update_rug_status(mint, 1)
-                print(f"{symbol} rug!!!")
+                if rat_sell_token > creator_buy_token * 0.3:
+                    db.update_rug_status(mint, 2)
+                    print(f"{symbol} rug!!! RAT!!!")
+                else:
+                    db.update_rug_status(mint, 1)
+                    print(f"{symbol} rug!!!")
             else:
                 db.update_rug_status(mint, 0)
 
