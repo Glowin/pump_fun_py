@@ -210,7 +210,7 @@ class MySQLDatabase:
             return []
 
         cursor = self.connection.cursor()
-        query = "SELECT mint, creator, symbol FROM pump_fun_mint WHERE rug IS NULL OR rug = 0 limit 100"
+        query = "SELECT mint, creator, symbol FROM pump_fun_mint WHERE rug IS NULL OR rug = 0 ORDER BY created_timestamp DESC limit 100"
 
         try:
             cursor.execute(query)
