@@ -9,6 +9,8 @@ from db import MySQLDatabase
 # Initialize the database connection
 db = MySQLDatabase()
 
+URL_PREFIX = "https://frontend-api.pump.fun"
+
 def find_data(data, field):
     if isinstance(data, dict):
         if field in data:
@@ -48,7 +50,7 @@ def get_token_balance(base_mint: str):
         return None
 
 def get_coin_data(mint_str, proxy):
-    url = f"https://client-api-2-74b1891ee9f9.herokuapp.com/coins/{mint_str}"
+    url = f"{URL_PREFIX}/coins/{mint_str}"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
         "Accept": "*/*",
@@ -113,7 +115,7 @@ def get_coin_list(sort='created_timestamp', order='DESC', proxy=None):
     response = None  # Ensure response is defined
     while retries < max_retries:
         try:
-            response = requests.get('https://client-api-2-74b1891ee9f9.herokuapp.com/coins', params=params, headers=headers, proxies=proxies)
+            response = requests.get(f'{URL_PREFIX}/coins', params=params, headers=headers, proxies=proxies)
             response.raise_for_status()  # Check for HTTP errors
             break
         except requests.exceptions.RequestException as e:
@@ -161,7 +163,7 @@ def get_trade_list(mint, creator, symbol, proxy):
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"macOS"',
     }
-    url = f'https://client-api-2-74b1891ee9f9.herokuapp.com/trades/{mint}?limit=200&offset=0'
+    url = f'{URL_PREFIX}/trades/{mint}?limit=200&offset=0'
     if proxy and proxy != 'None':
         proxies = {
             'http': 'socks5h://' + proxy,
