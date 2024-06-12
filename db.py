@@ -181,7 +181,7 @@ class MySQLDatabase:
 
         cursor = self.connection.cursor()
         query = """
-            INSERT INTO pump_fun_trade (
+            INSERT IGNORE INTO pump_fun_trade (
                 signature, mint, sol_amount, token_amount, is_buy, user, 
                 timestamp, tx_index, username, profile_image
             )

@@ -216,8 +216,6 @@ def get_trade_list(mint, creator, symbol, proxy):
             # 记录每条交易到数据库中
             for trade in trade_list:
                 try:
-                    if db.check_trade_exists(trade['signature']):
-                        continue
                     success = db.insert_trade(trade)
                 except Exception as e:
                     print(f"Error while inserting trade data: {e}")
