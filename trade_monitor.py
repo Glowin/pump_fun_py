@@ -9,11 +9,12 @@ db.connect()
 # Argument parser
 parser = argparse.ArgumentParser(description='Process arguments')
 parser.add_argument('--proxy', default='None', help='proxy for pump_fun api, default is None')
+parser.add_argument('--sort', default='DESC', help='sort')
 args = parser.parse_args()
 
 while(1):
     # Retrieve all mints that need to be checked for rugs
-    mint_list = db.get_rug_checklist()
+    mint_list = db.get_rug_checklist(args.sort)
 
     # Record trade data for each mint in the database
     for mint_info in mint_list:
