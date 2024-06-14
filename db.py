@@ -198,7 +198,7 @@ class MySQLDatabase:
         finally:
             cursor.close()
 
-    def get_rug_checklist(self, sort="DESC"):
+    def get_rug_checklist(self, sort="DESC", type="new"):
         """
         Get a list of mints from the pump_fun_mint table where the rug field is NULL.
         
@@ -210,7 +210,10 @@ class MySQLDatabase:
             return []
 
         cursor = self.connection.cursor()
-        query = f"SELECT mint, creator, symbol FROM pump_fun_mint WHERE rug IS NULL OR rug = 0 ORDER BY created_timestamp {sort} limit 100"
+        if type == "new":
+            query = f"SELECT mint, creator, symbol FROM pump_fun_mint WHERE rug IS NULL ORDER BY created_timestamp {sort} limit 100"
+        elif type == "check":
+            query = f"SELECT mint, creator, symbol FROM pump_fun_mint WHERE rug IS NULL OR rug = 0 ORDER BY created_timestamp {sort} limit 500"
 
         try:
             cursor.execute(query)
