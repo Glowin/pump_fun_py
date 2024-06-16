@@ -64,7 +64,7 @@ def get_coin_data(mint_str, proxy):
         "Sec-Fetch-Site": "cross-site",
         "If-None-Match": 'W/"43a-tWaCcS4XujSi30IFlxDCJYxkMKg"'
     }
-    if proxy:
+    if proxy and proxy != 'None':
         proxies = {
             'http': 'socks5h://' + proxy,
             'https': 'socks5h://' + proxy,
@@ -102,7 +102,7 @@ def get_coin_list(sort='created_timestamp', order='DESC', proxy=None):
         'order': order,
         'includeNsfw': 'false',
     }
-    if proxy:
+    if proxy and proxy != 'None':
         proxies = {
             'http': 'socks5h://' + proxy,
             'https': 'socks5h://' + proxy,
