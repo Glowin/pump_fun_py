@@ -315,7 +315,47 @@ class MySQLDatabase:
         finally:
             cursor.close()
 
+    def update_mint(self, coin):
+        """
+        Updates the mint information in the pump_fun_mint table for a given coin.
 
+        Args:
+            coin (dict): The coin data to update.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return False
+
+        cursor = self.connection.cursor()
+        query = """
+            UPDATE pump_fun_mint
+            SET raydium_pool = %(raydium_pool)s,
+                complete = %(complete)s,
+                virtual_sol_reserves = %(virtual_sol_reserves)s,
+                virtual_token_reserves = %(virtual_token_reserves)s,
+                last_trade_timestamp = %(last_trade_timestamp)s,
+                king_of_the_hill_timestamp = %(king_of_the_hill_timestamp)s,
+                market_cap = %(market_cap)s,
+                reply_count = %(reply_count)s,
+                last_reply = %(last_reply)s,
+                market_id = %(market_id)s,
+                inverted = %(inverted)s,
+                username = %(username)s,
+                profile_image = %(profile_image)s,
+                usd_market_cap = %(usd_market_cap)s
+            WHERE mint = %(mint)s
+        """
+        try:
+            cursor.execute(query, coin)
+            self.connection.commit()
+            return True
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            self.connection.rollback()
+            return False
+        finally:
+            cursor.close()
+        
 
     def __del__(self):
         self.disconnect()

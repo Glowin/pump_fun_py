@@ -133,9 +133,12 @@ def get_coin_list(sort='created_timestamp', order='DESC', proxy=None):
             db.connect()
             for coin in coin_list:
                 try:
-                    if db.check_mint_exists(coin['mint']):
+                    if db.check_mint_exists(coin['mint']) and sort == 'created_timestamp':
                         continue
-                    success = db.pump_fun_mint_insert(coin)
+                    elif db.check_mint_exists(coin['mint']) and sort == 'last_trade_timestamp':
+                        db.update_mint(coin)
+                    else:
+                        success = db.pump_fun_mint_insert(coin)
                 except Exception as e:
                     print(f"Error while inserting token data: {e}")
                     return False
