@@ -198,6 +198,39 @@ class MySQLDatabase:
         finally:
             cursor.close()
 
+    def insert_trades_bulk(self, trades):
+        """
+        Insert multiple trade records into the pump_fun_trade table in a single transaction.
+
+        Args:
+            trades (list): A list of dictionaries, each containing trade data to insert into the table.
+
+        Returns:
+            bool: True if the insertion was successful, False otherwise.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return False
+
+        cursor = self.connection.cursor()
+        query = """
+            INSERT IGNORE INTO pump_fun_trade (
+                signature, mint, sol_amount, token_amount, is_buy, user, 
+                timestamp, tx_index, username, profile_image
+            )
+            VALUES (%(signature)s, %(mint)s, %(sol_amount)s, %(token_amount)s, %(is_buy)s, %(user)s, %(timestamp)s, %(tx_index)s, %(username)s, %(profile_image)s)
+        """
+        
+        try:
+            cursor.executemany(query, trades)
+            self.connection.commit()
+            return True
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return False
+        finally:
+            cursor.close()
+
     def get_rug_checklist(self, sort="DESC", type="new"):
         """
         Get a list of mints from the pump_fun_mint table where the rug field is NULL.
@@ -447,7 +480,7 @@ class MySQLDatabase:
             SELECT COALESCE(MAX(t.timestamp), 0)
             FROM pump_fun_trade t
             WHERE t.mint = m.mint
-        )
+        ) limit 500
         """
         try:
             cursor.execute(query)

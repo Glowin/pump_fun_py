@@ -195,7 +195,7 @@ def get_trade_list(mint, creator, symbol, proxy):
             proxies = None
 
         retries = 0
-        max_retries = 10
+        max_retries = 30
         while retries < max_retries:
             try:
                 response = requests.get(url, headers=headers, proxies=proxies, timeout=10)
@@ -244,15 +244,17 @@ def get_trade_list(mint, creator, symbol, proxy):
     else:
         db.update_rug_status(mint, 0)
 
-    # 记录每条交易到数据库中
-    for trade in trade_list:
-        try:
-            success = db.insert_trade(trade)
-        except Exception as e:
-            print(f"Error while inserting trade data: {e}")
-            return False
+    # 批量记录交易到数据库中
+    try:
+        success = db.insert_trades_bulk(trade_list)
+    except Exception as e:
+        print(f"Error while inserting trade data: {e}")
+        return False
     db.disconnect()
-    return max(trade['timestamp'] for trade in trade_list) * 1000
+    if trade_list:
+        return max(trade['timestamp'] for trade in trade_list) * 1000
+    else:
+        return None
 
 def confirm_txn(txn_sig, max_retries=20, retry_interval=3):
     retries = 0
