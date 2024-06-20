@@ -5,3 +5,4 @@ base58 # 用于处理 Base58 编码的密钥对。
 structlog # 用于结构化日志记录。
 python-dotenv
 mysql-connector-python
+rich

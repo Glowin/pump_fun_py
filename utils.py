@@ -72,9 +72,25 @@ def get_coin_data(mint_str, proxy):
     else:
         proxies = None
 
-    response = requests.get(url, headers=headers, proxies=proxies)
+    retries = 0
+    max_retries = 30
+    response = None  # Ensure response is defined
+    while retries < max_retries:
+        try:
+            response = requests.get(url, headers=headers, proxies=proxies)
+            response.raise_for_status()  # Check for HTTP errors
+            break
+        except requests.exceptions.RequestException as e:
+            retries += 1
+            print(f"Connection issue. Retrying {retries}/{max_retries}...")
+            print(str(e))
+            time.sleep(1)
+    else:
+        return None
+
     if response.status_code == 200:
-        return response.json()
+        coin_data = response.json()
+        return coin_data
     else:
         return None
 
@@ -166,70 +182,77 @@ def get_trade_list(mint, creator, symbol, proxy):
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"macOS"',
     }
-    url = f'{URL_PREFIX}/trades/{mint}?limit=200&offset=0'
-    if proxy and proxy != 'None':
-        proxies = {
-            'http': 'socks5h://' + proxy,
-            'https': 'socks5h://' + proxy,
-        }
-    else:
-        proxies = None
+    offset = 0
+    trade_list = []
+    while True:
+        url = f'{URL_PREFIX}/trades/{mint}?limit=200&offset={offset}'
+        if proxy and proxy != 'None':
+            proxies = {
+                'http': 'socks5h://' + proxy,
+                'https': 'socks5h://' + proxy,
+            }
+        else:
+            proxies = None
 
-    retries = 0
-    max_retries = 10
-    while retries < max_retries:
-        try:
-            response = requests.get(url, headers=headers, proxies=proxies, timeout=10)
-            response.raise_for_status()  # Check for HTTP errors
-            break
-        except requests.exceptions.RequestException as e:
-            retries += 1
-            print(f"Attempt {retries} failed: {e}. Retrying...")
-            time.sleep(1)
-    else:
-        print("Max retries reached. Failed to fetch trade list.")
-        return None
-    
-    if response.status_code == 200:
-        try:
-            trade_list = response.json()
-            
-            db.connect()
-
-            # 如果 creator rug 了，则记录到数据库中
-            creator_buy_token = sum(trade['token_amount'] for trade in trade_list if trade['user'] == creator and trade['is_buy'] == 1)
-            creator_sell_token = sum(trade['token_amount'] for trade in trade_list if trade['user'] == creator and trade['is_buy'] == 0)
-            # Generate a list of users who have made buy trades (is_buy = 1)
-            buy_users = set(trade['user'] for trade in trade_list if trade['is_buy'] == 1)
-            # Calculate the sum of token_amount for sell trades (is_buy = 0) where the user is not in the buy_user list
-            rat_sell_token = sum(trade['token_amount'] for trade in trade_list if trade['is_buy'] == 0 and trade['user'] not in buy_users)
-            if rat_sell_token > 0:            
-                # Print the result for verification
-                print(f"Total rat sell token amount: {rat_sell_token}")
-            if (creator_sell_token + rat_sell_token) > creator_buy_token * 0.5:
-                if rat_sell_token > creator_buy_token * 0.3:
-                    db.update_rug_status(mint, 2)
-                    print(f"{symbol} rug!!! RAT!!!")
-                else:
-                    db.update_rug_status(mint, 1)
-                    print(f"{symbol} rug!!!")
-            else:
-                db.update_rug_status(mint, 0)
-
-            # 记录每条交易到数据库中
-            for trade in trade_list:
-                try:
-                    success = db.insert_trade(trade)
-                except Exception as e:
-                    print(f"Error while inserting trade data: {e}")
-                    return False
-            return True
-            db.disconnect()
-        except ValueError as e:
-            print("Error parsing JSON response:", e)
+        retries = 0
+        max_retries = 10
+        while retries < max_retries:
+            try:
+                response = requests.get(url, headers=headers, proxies=proxies, timeout=10)
+                response.raise_for_status()  # Check for HTTP errors
+                break
+            except requests.exceptions.RequestException as e:
+                retries += 1
+                print(f"Attempt {retries} failed: {e}. Retrying...")
+                time.sleep(1)
+        else:
+            print("Max retries reached. Failed to fetch trade list.")
             return None
+        
+        if response.status_code == 200:
+            try:
+                current_trade_list = response.json()
+                trade_list.extend(current_trade_list)
+                if len(current_trade_list) < 200:
+                    break
+                offset += 200
+            except ValueError as e:
+                print("Error parsing JSON response:", e)
+                return None
+        else:
+            return None
+    
+    db.connect()
+
+    # 如果 creator rug 了，则记录到数据库中
+    creator_buy_token = sum(trade['token_amount'] for trade in trade_list if trade['user'] == creator and trade['is_buy'] == 1)
+    creator_sell_token = sum(trade['token_amount'] for trade in trade_list if trade['user'] == creator and trade['is_buy'] == 0)
+    # Generate a list of users who have made buy trades (is_buy = 1)
+    buy_users = set(trade['user'] for trade in trade_list if trade['is_buy'] == 1)
+    # Calculate the sum of token_amount for sell trades (is_buy = 0) where the user is not in the buy_user list
+    rat_sell_token = sum(trade['token_amount'] for trade in trade_list if trade['is_buy'] == 0 and trade['user'] not in buy_users)
+    if rat_sell_token > 0:            
+        # Print the result for verification
+        print(f"Total rat sell token amount: {rat_sell_token}")
+    if (creator_sell_token + rat_sell_token) > creator_buy_token * 0.5:
+        if rat_sell_token > creator_buy_token * 0.3:
+            db.update_rug_status(mint, 2)
+            print(f"{symbol} rug!!! RAT!!!")
+        else:
+            db.update_rug_status(mint, 1)
+            print(f"{symbol} rug!!!")
     else:
-        return None
+        db.update_rug_status(mint, 0)
+
+    # 记录每条交易到数据库中
+    for trade in trade_list:
+        try:
+            success = db.insert_trade(trade)
+        except Exception as e:
+            print(f"Error while inserting trade data: {e}")
+            return False
+    db.disconnect()
+    return max(trade['timestamp'] for trade in trade_list) * 1000
 
 def confirm_txn(txn_sig, max_retries=20, retry_interval=3):
     retries = 0

@@ -355,7 +355,109 @@ class MySQLDatabase:
             return False
         finally:
             cursor.close()
-        
+
+    def get_full_mint_list(self):
+        """
+        Retrieves all mint, creator, and symbol values from the pump_fun_mint table.
+
+        Returns:
+            list: A list of dictionaries containing mint, creator, and symbol values.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return []
+
+        cursor = self.connection.cursor()
+        query = "SELECT mint, creator, symbol FROM pump_fun_mint"
+        try:
+            cursor.execute(query)
+            result = cursor.fetchall()
+            return [{'mint': row[0], 'creator': row[1], 'symbol': row[2]} for row in result]
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return []
+        finally:
+            cursor.close()
+
+    def get_max_timestamp_for_mint(self, mint):
+        """
+        Retrieves the maximum timestamp for a given mint from the pump_fun_trade table.
+
+        Args:
+            mint (str): The mint identifier.
+
+        Returns:
+            int: The maximum timestamp for the given mint, or 0 if no records are found.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return 0
+
+        cursor = self.connection.cursor()
+        query = "SELECT COALESCE(MAX(timestamp), 0) FROM pump_fun_trade WHERE mint = %s"
+        try:
+            cursor.execute(query, (mint,))
+            result = cursor.fetchone()
+            return result[0] if result else 0
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return 0
+        finally:
+            cursor.close()
+
+    def get_is_null_mint_list(self):
+        """
+        Retrieves all mint, creator, and symbol values from the pump_fun_mint table where last_trade_timestamp is null.
+
+        Returns:
+            list: A list of dictionaries containing mint, creator, and symbol values.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return []
+
+        cursor = self.connection.cursor()
+        query = "SELECT mint, creator, symbol FROM pump_fun_mint WHERE last_trade_timestamp IS NULL"
+        try:
+            cursor.execute(query)
+            result = cursor.fetchall()
+            return [{'mint': row[0], 'creator': row[1], 'symbol': row[2]} for row in result]
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return []
+        finally:
+            cursor.close()
+
+    def get_new_mint_list(self):
+        """
+        Retrieves mints from the pump_fun_mint table where last_trade_timestamp is greater than the maximum timestamp in the pump_fun_trade table.
+
+        Returns:
+            list: A list of dictionaries containing mint, creator, and symbol values.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return []
+
+        cursor = self.connection.cursor()
+        query = """
+        SELECT m.mint, m.creator, m.symbol
+        FROM pump_fun_mint m
+        WHERE m.last_trade_timestamp / 1000 > (
+            SELECT COALESCE(MAX(t.timestamp), 0)
+            FROM pump_fun_trade t
+            WHERE t.mint = m.mint
+        )
+        """
+        try:
+            cursor.execute(query)
+            result = cursor.fetchall()
+            return [{'mint': row[0], 'creator': row[1], 'symbol': row[2]} for row in result]
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return []
+        finally:
+            cursor.close()
 
     def __del__(self):
         self.disconnect()
