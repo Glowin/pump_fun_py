@@ -3,6 +3,11 @@ from rich.progress import Progress
 from utils import get_trade_list, get_coin_data
 import argparse
 
+# Define a blacklist of mints
+mint_blacklist = set([
+    "FtQnb51TtSeNc2Tzn5yoG2LiDHodeu4imq2g9nvY6yL6",
+])
+
 # Initialize the database connection
 db = MySQLDatabase()
 db.connect()
@@ -21,6 +26,10 @@ while(1):
         mint_list = db.get_is_null_mint_list()
     elif args.type == 'new':
         mint_list = db.get_new_mint_list()
+
+    # Filter out mints that are in the blacklist
+    mint_list = [mint_info for mint_info in mint_list if mint_info['mint'] not in mint_blacklist]
+
 
     with Progress() as progress:
         task = progress.add_task("[green]Processing mints...", total=len(mint_list))
