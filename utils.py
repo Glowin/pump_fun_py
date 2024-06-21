@@ -188,7 +188,7 @@ def get_trade_list(mint, creator, symbol, proxy):
     }
     offset = 0
     trade_list = []
-    while True:
+    for _ in range(10):
         url = f'{URL_PREFIX}/trades/{mint}?limit=200&offset={offset}'
         if proxy and proxy != 'None':
             proxies = {
