@@ -88,10 +88,14 @@ def get_coin_data(mint_str, proxy):
     else:
         return None
 
-    if response.status_code == 200:
-        coin_data = response.json()
-        return coin_data
-    else:
+    try:
+        if response.status_code == 200:
+            coin_data = response.json()
+            return coin_data
+        else:
+            return None
+    except requests.exceptions.JSONDecodeError as e:
+        print(f"JSON decode error: {e}")
         return None
 
 def get_coin_list(sort='created_timestamp', order='DESC', proxy=None):
