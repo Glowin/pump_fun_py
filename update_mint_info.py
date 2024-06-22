@@ -1,6 +1,6 @@
 from db import MySQLDatabase
 from rich.progress import Progress
-from utils import get_trade_list, get_coin_data
+from utils import Utils
 import argparse
 import multiprocessing
 
@@ -18,12 +18,13 @@ args = parser.parse_args()
 def update_mint_trade_info(m_list, proxy_info):
     with Progress() as progress:
         task = progress.add_task(f"[green]Processing mints... (PID: {multiprocessing.current_process().pid})", total=len(m_list))
+        utils = Utils()
         _d_b = MySQLDatabase()
         _d_b.connect()
         for mint_info in m_list:
             mint, creator, symbol = mint_info['mint'], mint_info['creator'], mint_info['symbol']
-            coin_data = get_coin_data(mint, proxy_info)
-            last_trade_timestamp = get_trade_list(mint, creator, symbol, proxy=proxy_info)
+            coin_data = utils.get_coin_data(mint, proxy_info)
+            last_trade_timestamp = utils.get_trade_list(mint, creator, symbol, proxy=proxy_info)
             coin_data['last_trade_timestamp'] = last_trade_timestamp
             _d_b.update_mint(coin_data)
             if last_trade_timestamp:
@@ -37,33 +38,33 @@ if __name__ == '__main__':
     # Initialize the database connection
     db = MySQLDatabase()
     db.connect()
-    while(1):
-        if args.type == 'full':
-            # Fetch the full mint list
-            mint_list = db.get_full_mint_list()
-        elif args.type == 'is_null':
-            mint_list = db.get_is_null_mint_list()
-        elif args.type == 'new':
-            mint_list = db.get_new_mint_list()
-        elif args.type == 'quick':
-            mint_list = db.get_quick_mint_list(10)
 
-        # Filter out mints that are in the blacklist
-        mint_list = [mint_info for mint_info in mint_list if mint_info['mint'] not in mint_blacklist]
-
-        procs = []
-        p_list = args.proxy_list.split(',') if ',' in args.proxy_list else [args.proxy_list]
-        p_count = len(p_list)
-
-        for i in range(p_count):
-            tmp_list = mint_list[i::p_count]
-            tmp_proxy = p_list[i]
-            procs.append(multiprocessing.Process(target=update_mint_trade_info, args=(tmp_list, tmp_proxy)))
-
-        for proc in procs:
-            proc.start()
-        for proc in procs:
-            proc.join()
-
+    if args.type == 'full':
+        # Fetch the full mint list
+        mint_list = db.get_full_mint_list()
+    elif args.type == 'is_null':
+        mint_list = db.get_is_null_mint_list()
+    elif args.type == 'new':
+        mint_list = db.get_new_mint_list()
+    elif args.type == 'quick':
+        mint_list = db.get_quick_mint_list(100)
+    
     # Disconnect from the database
     db.disconnect()
+
+    # Filter out mints that are in the blacklist
+    mint_list = [mint_info for mint_info in mint_list if mint_info['mint'] not in mint_blacklist]
+
+    procs = []
+    p_list = args.proxy_list.split(',') if ',' in args.proxy_list else [args.proxy_list]
+    p_count = len(p_list)
+
+    for i in range(p_count):
+        tmp_list = mint_list[i::p_count]
+        tmp_proxy = p_list[i]
+        procs.append(multiprocessing.Process(target=update_mint_trade_info, args=(tmp_list, tmp_proxy)))
+
+    for proc in procs:
+        proc.start()
+    for proc in procs:
+        proc.join()
