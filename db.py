@@ -492,7 +492,7 @@ class MySQLDatabase:
         finally:
             cursor.close()
 
-    def get_quick_mint_list(self):
+    def get_quick_mint_list(self, count=10):
         """
         Retrieves the latest 10 mints from the pump_fun_mint table.
 
@@ -504,11 +504,11 @@ class MySQLDatabase:
             return []
 
         cursor = self.connection.cursor()
-        query = """
+        query = f"""
         SELECT mint, creator, symbol
         FROM pump_fun_mint
         ORDER BY last_trade_timestamp DESC
-        LIMIT 10
+        LIMIT {count}
         """
         try:
             cursor.execute(query)

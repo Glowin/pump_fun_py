@@ -15,7 +15,7 @@ db.connect()
 # Argument parser to get proxy from command line
 parser = argparse.ArgumentParser(description='Process proxy argument')
 parser.add_argument('--proxy', default='None', help='proxy for pump_fun api, default is None')
-parser.add_argument('--type', default='full', help='full: 全量更新, is_null: last_trade_timestamp is null, new: 最新交易的时间的coin列表有更新，需要更新 trade 记录')
+parser.add_argument('--type', default='full', help='full: 全量更新, is_null: last_trade_timestamp is null, new: 最新交易的时间的coin列表有更新,需要更新 trade 记录; quick: 更新最新的数据，方便快速决策;')
 args = parser.parse_args()
 
 while(1):
@@ -27,7 +27,7 @@ while(1):
     elif args.type == 'new':
         mint_list = db.get_new_mint_list()
     elif args.type == 'quick':
-        mint_list = db.get_quick_mint_list()
+        mint_list = db.get_quick_mint_list(10)
 
     # Filter out mints that are in the blacklist
     mint_list = [mint_info for mint_info in mint_list if mint_info['mint'] not in mint_blacklist]
