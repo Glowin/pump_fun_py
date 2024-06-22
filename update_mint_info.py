@@ -26,6 +26,8 @@ while(1):
         mint_list = db.get_is_null_mint_list()
     elif args.type == 'new':
         mint_list = db.get_new_mint_list()
+    elif args.type == 'quick':
+        mint_list = db.get_quick_mint_list()
 
     # Filter out mints that are in the blacklist
     mint_list = [mint_info for mint_info in mint_list if mint_info['mint'] not in mint_blacklist]
@@ -41,9 +43,9 @@ while(1):
             coin_data['last_trade_timestamp'] = last_trade_timestamp
             db.update_mint(coin_data)
             if last_trade_timestamp:
-                print(f"Successfully recorded trade data for symbol: {symbol}")
+                print(f"{symbol} | Successfully recorded trade data")
             else:
-                print(f"Failed to record trade data for symbol: {symbol}")
+                print(f"{symbol} | Failed to record trade data for ")
             progress.advance(task)
 
 # Disconnect from the database

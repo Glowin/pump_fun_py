@@ -33,8 +33,8 @@
                 "created_timestamp",
                 "--order",
                 "DESC",
-                "--proxy",
-                "127.0.0.1:10014"
+                // "--proxy",
+                // "127.0.0.1:1082"
             ],
             "console": "integratedTerminal",
             "env": {
@@ -61,8 +61,42 @@
             "request": "launch",
             "program": "trade_monitor.py",
             "args": [
+                // "--proxy",
+                // "127.0.0.1:1082",
+                "--type",
+                "check",
+                "--sort",
+                "DESC"
+            ],
+            "console": "integratedTerminal",
+            "env": {
+            }
+        },
+        {
+            "name": "Debug: update_mint_info",
+            "type": "python",
+            "request": "launch",
+            "program": "update_mint_info.py",
+            "args": [
+                "--type",
+                "new",
                 "--proxy",
-                "127.0.0.1:10014"
+                "127.0.0.1:1082",
+            ],
+            "console": "integratedTerminal",
+            "env": {
+            }
+        },
+        {
+            "name": "Debug: quick, update_mint_info",
+            "type": "python",
+            "request": "launch",
+            "program": "update_mint_info.py",
+            "args": [
+                "--type",
+                "quick",
+                "--proxy",
+                "127.0.0.1:1082",
             ],
             "console": "integratedTerminal",
             "env": {

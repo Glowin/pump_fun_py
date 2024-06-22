@@ -492,6 +492,35 @@ class MySQLDatabase:
         finally:
             cursor.close()
 
+    def get_quick_mint_list(self):
+        """
+        Retrieves the latest 10 mints from the pump_fun_mint table.
+
+        Returns:
+            list: A list of dictionaries containing mint, creator, and symbol values.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return []
+
+        cursor = self.connection.cursor()
+        query = """
+        SELECT mint, creator, symbol
+        FROM pump_fun_mint
+        ORDER BY last_trade_timestamp DESC
+        LIMIT 10
+        """
+        try:
+            cursor.execute(query)
+            result = cursor.fetchall()
+            return [{'mint': row[0], 'creator': row[1], 'symbol': row[2]} for row in result]
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return []
+        finally:
+            cursor.close()
+
+
     def __del__(self):
         self.disconnect()
 

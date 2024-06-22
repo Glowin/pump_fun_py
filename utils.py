@@ -170,6 +170,9 @@ def get_coin_list(sort='created_timestamp', order='DESC', proxy=None):
         return None
 
 def get_trade_list(mint, creator, symbol, proxy):
+    retries = 0
+    max_retries = 3
+    trade_page = 3
     headers = {
         'Accept': '*/*',
         'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -188,7 +191,7 @@ def get_trade_list(mint, creator, symbol, proxy):
     }
     offset = 0
     trade_list = []
-    for _ in range(10):
+    for _ in range(trade_page):
         url = f'{URL_PREFIX}/trades/{mint}?limit=200&offset={offset}'
         if proxy and proxy != 'None':
             proxies = {
@@ -198,8 +201,7 @@ def get_trade_list(mint, creator, symbol, proxy):
         else:
             proxies = None
 
-        retries = 0
-        max_retries = 30
+
         while retries < max_retries:
             try:
                 response = requests.get(url, headers=headers, proxies=proxies, timeout=10)
@@ -208,7 +210,7 @@ def get_trade_list(mint, creator, symbol, proxy):
             except requests.exceptions.RequestException as e:
                 retries += 1
                 print(f"Attempt {retries} failed: {e}. Retrying...")
-                time.sleep(1)
+                time.sleep(1 + retries*0.2)
         else:
             print("Max retries reached. Failed to fetch trade list.")
             return None
