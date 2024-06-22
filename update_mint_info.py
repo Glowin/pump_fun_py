@@ -45,7 +45,7 @@ if __name__ == '__main__':
     elif args.type == 'is_null':
         mint_list = db.get_is_null_mint_list()
     elif args.type == 'new':
-        mint_list = db.get_new_mint_list()
+        mint_list = db.get_new_mint_list(100)
     elif args.type == 'quick':
         mint_list = db.get_quick_mint_list(100)
     

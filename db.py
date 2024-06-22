@@ -461,7 +461,7 @@ class MySQLDatabase:
         finally:
             cursor.close()
 
-    def get_new_mint_list(self):
+    def get_new_mint_list(self, count=100):
         """
         Retrieves mints from the pump_fun_mint table where last_trade_timestamp is greater than the maximum timestamp in the pump_fun_trade table.
 
@@ -473,14 +473,14 @@ class MySQLDatabase:
             return []
 
         cursor = self.connection.cursor()
-        query = """
+        query = f"""
         SELECT m.mint, m.creator, m.symbol
         FROM pump_fun_mint m
         WHERE m.last_trade_timestamp / 1000 > (
             SELECT COALESCE(MAX(t.timestamp), 0)
             FROM pump_fun_trade t
             WHERE t.mint = m.mint
-        ) limit 500
+        ) limit {count}
         """
         try:
             cursor.execute(query)
