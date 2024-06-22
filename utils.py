@@ -1,6 +1,5 @@
 import json
 import time
-import base58
 import requests
 from config import RPC, PUB_KEY, client
 from solana.transaction import Signature
