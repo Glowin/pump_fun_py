@@ -1,3 +1,5 @@
 .env
 __pycache__
 myenv
+run.py
+run.sh

@@ -2,51 +2,68 @@ from db import MySQLDatabase
 from rich.progress import Progress
 from utils import get_trade_list, get_coin_data
 import argparse
+import multiprocessing
 
 # Define a blacklist of mints
 mint_blacklist = set([
     "FtQnb51TtSeNc2Tzn5yoG2LiDHodeu4imq2g9nvY6yL6",
 ])
 
-# Initialize the database connection
-db = MySQLDatabase()
-db.connect()
-
 # Argument parser to get proxy from command line
 parser = argparse.ArgumentParser(description='Process proxy argument')
-parser.add_argument('--proxy', default='None', help='proxy for pump_fun api, default is None')
+parser.add_argument('--proxy_list', default='None', help='proxy 的列表，用英文逗号区分, default is None')
 parser.add_argument('--type', default='full', help='full: 全量更新, is_null: last_trade_timestamp is null, new: 最新交易的时间的coin列表有更新,需要更新 trade 记录; quick: 更新最新的数据，方便快速决策;')
 args = parser.parse_args()
 
-while(1):
-    if args.type == 'full':
-        # Fetch the full mint list
-        mint_list = db.get_full_mint_list()
-    elif args.type == 'is_null':
-        mint_list = db.get_is_null_mint_list()
-    elif args.type == 'new':
-        mint_list = db.get_new_mint_list()
-    elif args.type == 'quick':
-        mint_list = db.get_quick_mint_list(10)
-
-    # Filter out mints that are in the blacklist
-    mint_list = [mint_info for mint_info in mint_list if mint_info['mint'] not in mint_blacklist]
-
-
+def update_mint_trade_info(m_list, proxy_info):
     with Progress() as progress:
-        task = progress.add_task("[green]Processing mints...", total=len(mint_list))
-        
-        for mint_info in mint_list:
+        task = progress.add_task(f"[green]Processing mints... (PID: {multiprocessing.current_process().pid})", total=len(m_list))
+        _d_b = MySQLDatabase()
+        _d_b.connect()
+        for mint_info in m_list:
             mint, creator, symbol = mint_info['mint'], mint_info['creator'], mint_info['symbol']
-            coin_data = get_coin_data(mint, args.proxy)
-            last_trade_timestamp = get_trade_list(mint, creator, symbol, proxy=args.proxy)
+            coin_data = get_coin_data(mint, proxy_info)
+            last_trade_timestamp = get_trade_list(mint, creator, symbol, proxy=proxy_info)
             coin_data['last_trade_timestamp'] = last_trade_timestamp
-            db.update_mint(coin_data)
+            _d_b.update_mint(coin_data)
             if last_trade_timestamp:
-                print(f"{symbol} | Successfully recorded trade data")
+                print(f"{symbol} | (PID: {multiprocessing.current_process().pid}) Successfully recorded trade data")
             else:
-                print(f"{symbol} | Failed to record trade data for ")
+                print(f"{symbol} | (PID: {multiprocessing.current_process().pid}) Failed to record trade data for ")
             progress.advance(task)
+        _d_b.disconnect()
 
-# Disconnect from the database
-db.disconnect()
+if __name__ == '__main__':
+    # Initialize the database connection
+    db = MySQLDatabase()
+    db.connect()
+    while(1):
+        if args.type == 'full':
+            # Fetch the full mint list
+            mint_list = db.get_full_mint_list()
+        elif args.type == 'is_null':
+            mint_list = db.get_is_null_mint_list()
+        elif args.type == 'new':
+            mint_list = db.get_new_mint_list()
+        elif args.type == 'quick':
+            mint_list = db.get_quick_mint_list(10)
+
+        # Filter out mints that are in the blacklist
+        mint_list = [mint_info for mint_info in mint_list if mint_info['mint'] not in mint_blacklist]
+
+        procs = []
+        p_list = args.proxy_list.split(',') if ',' in args.proxy_list else [args.proxy_list]
+        p_count = len(p_list)
+
+        for i in range(p_count):
+            tmp_list = mint_list[i::p_count]
+            tmp_proxy = p_list[i]
+            procs.append(multiprocessing.Process(target=update_mint_trade_info, args=(tmp_list, tmp_proxy)))
+
+        for proc in procs:
+            proc.start()
+        for proc in procs:
+            proc.join()
+
+    # Disconnect from the database
+    db.disconnect()
