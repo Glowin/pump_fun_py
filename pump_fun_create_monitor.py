@@ -1,4 +1,4 @@
-from utils import get_coin_list
+from utils import Utils
 import argparse
 import time
 
@@ -9,5 +9,7 @@ parser.add_argument('--order', default='DESC', help='the sort order, default is 
 parser.add_argument('--proxy', default='None', help='proxy for pump_fun api, default is None')
 args = parser.parse_args()
 
+utils = Utils()
+
 while(1):
-    get_coin_list(sort=args.sort, order=args.order, proxy=args.proxy)
+    utils.get_coin_list(sort=args.sort, order=args.order, proxy=args.proxy)
