@@ -55,16 +55,17 @@ if __name__ == '__main__':
     # Filter out mints that are in the blacklist
     mint_list = [mint_info for mint_info in mint_list if mint_info['mint'] not in mint_blacklist]
 
-    procs = []
-    p_list = args.proxy_list.split(',') if ',' in args.proxy_list else [args.proxy_list]
-    p_count = len(p_list)
+    while True:
+        procs = []
+        p_list = args.proxy_list.split(',') if ',' in args.proxy_list else [args.proxy_list]
+        p_count = len(p_list)
 
-    for i in range(p_count):
-        tmp_list = mint_list[i::p_count]
-        tmp_proxy = p_list[i]
-        procs.append(multiprocessing.Process(target=update_mint_trade_info, args=(tmp_list, tmp_proxy)))
+        for i in range(p_count):
+            tmp_list = mint_list[i::p_count]
+            tmp_proxy = p_list[i]
+            procs.append(multiprocessing.Process(target=update_mint_trade_info, args=(tmp_list, tmp_proxy)))
 
-    for proc in procs:
-        proc.start()
-    for proc in procs:
-        proc.join()
+        for proc in procs:
+            proc.start()
+        for proc in procs:
+            proc.join()
