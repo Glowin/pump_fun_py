@@ -47,7 +47,7 @@ if __name__ == '__main__':
     elif args.type == 'new':
         mint_list = db.get_new_mint_list(100)
     elif args.type == 'quick':
-        mint_list = db.get_quick_mint_list(100)
+        mint_list = db.get_quick_mint_list(50)
     
     # Disconnect from the database
     db.disconnect()
