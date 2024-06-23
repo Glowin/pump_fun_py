@@ -220,7 +220,7 @@ class Utils:
                     break
                 except requests.exceptions.RequestException as e:
                     retries += 1
-                    print(f"Attempt {retries} failed: {proxy} {mint} {e}. Retrying...")
+                    print(f"Attempt {retries} failed: {proxy} {e}. Retrying...")
                     time.sleep(1 + retries*0.2)
             else:
                 print("Max retries reached. Failed to fetch trade list.")
