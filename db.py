@@ -520,6 +520,46 @@ class MySQLDatabase:
         finally:
             cursor.close()
 
+    def get_top_in_min_mint_list(self, minutes=5, count=10):
+        """
+        Retrieves the top mints in the last specified minutes from the pump_fun_mint table.
+
+        Args:
+            minutes (int): The time window in minutes to look back from the current time.
+            count (int): The number of top mints to retrieve.
+
+        Returns:
+            list: A list of dictionaries containing mint, creator, and symbol values.
+        """
+        if not self.connection:
+            print("Not connected to any database.")
+            return []
+
+        cursor = self.connection.cursor()
+        query = f"""
+        SELECT m.mint, m.creator, m.symbol, ROUND((SUM(CASE WHEN t.is_buy = 1 THEN t.sol_amount ELSE 0 END) - SUM(CASE WHEN t.is_buy = 0 THEN t.sol_amount ELSE 0 END)) / 1e9, 4) AS net_inflow_sol
+        FROM
+            pump_fun_trade t
+        LEFT JOIN
+            pump_fun_mint m ON t.mint = m.mint
+        WHERE
+            t.timestamp >= UNIX_TIMESTAMP(NOW() - INTERVAL {minutes} MINUTE)
+        GROUP BY
+            m.mint
+        ORDER BY
+            net_inflow_sol DESC
+        LIMIT {count};
+        """
+        try:
+            cursor.execute(query)
+            result = cursor.fetchall()
+            return [{'mint': row[0], 'creator': row[1], 'symbol': row[2]} for row in result]
+        except mysql.connector.Error as err:
+            print(f"Error: '{err}'")
+            return []
+        finally:
+            cursor.close()
+
 
     def __del__(self):
         self.disconnect()
