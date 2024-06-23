@@ -128,7 +128,7 @@ class Utils:
         }
         params = {
             'offset': '0',
-            'limit': '10',
+            'limit': '50',
             'sort': sort, # last_trade_timestamp, last_reply, reply_count, market_cap, created_timestamp
             'order': order,
             'includeNsfw': 'false',
