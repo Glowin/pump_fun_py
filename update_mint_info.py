@@ -47,8 +47,8 @@ if __name__ == '__main__':
     elif args.type == 'new':
         mint_list = db.get_new_mint_list(100)
     elif args.type == 'quick':
-        top_in_5_min_mint_list = db.get_top_in_min_mint_list(5, 50) # 最近5分钟纯流入sol的前50名
-        top_in_10_min_mint_list = db.get_top_in_min_mint_list(10, 50) # 最近10分钟纯流入sol的前50名
+        top_in_5_min_mint_list = db.get_top_in_min_mint_list(5, 20) # 最近5分钟纯流入sol的前50名
+        top_in_10_min_mint_list = db.get_top_in_min_mint_list(10, 20) # 最近10分钟纯流入sol的前50名
         quick_mint_list = db.get_quick_mint_list(50) # 最新更新 pump_fun_mint 中 last_trade_timestamp 的 mint
         # Combine the lists and remove duplicates based on the 'mint' key
         combined_mint_list = quick_mint_list + top_in_5_min_mint_list + top_in_10_min_mint_list
