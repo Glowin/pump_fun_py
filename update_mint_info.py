@@ -19,7 +19,6 @@ args = parser.parse_args()
 
 def update_mint_trade_info(m_list, proxy_info):
     with Progress() as progress:
-        task = progress.add_task(f"[green]Processing mints... (PID: {multiprocessing.current_process().pid})", total=len(m_list))
         utils = Utils()
         console = Console()
         _d_b = MySQLDatabase()
@@ -36,6 +35,7 @@ def update_mint_trade_info(m_list, proxy_info):
                 console.print(f"[red]{symbol}[/] {mint} | (PID: {multiprocessing.current_process().pid}) Failed.")
             progress.advance(task)
         _d_b.disconnect()
+        task = progress.add_task(f"[green]Processing mints... (PID: {multiprocessing.current_process().pid})", total=len(m_list))
 
 if __name__ == '__main__':
     # Initialize the database connection
