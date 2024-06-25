@@ -3,6 +3,7 @@ from rich.progress import Progress
 from utils import Utils
 import argparse
 import multiprocessing
+import random
 
 # Define a blacklist of mints
 mint_blacklist = set([
@@ -54,6 +55,7 @@ if __name__ == '__main__':
         combined_mint_list = quick_mint_list + top_in_5_min_mint_list + top_in_10_min_mint_list
         unique_mint_list = {mint_info['mint']: mint_info for mint_info in combined_mint_list}.values()
         mint_list = list(unique_mint_list)
+        random.shuffle(mint_list)
     
     # Disconnect from the database
     db.disconnect()
