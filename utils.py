@@ -182,8 +182,7 @@ class Utils:
 
     @staticmethod
     def get_trade_list(mint, creator, symbol, proxy):
-        retries = 0
-        max_retries = 3
+        max_retries = 1
         trade_page = 3
         headers = {
             'Accept': '*/*',
@@ -213,6 +212,7 @@ class Utils:
             else:
                 proxies = None
 
+            retries = 0
             while retries < max_retries:
                 try:
                     response = requests.get(url, headers=headers, proxies=proxies, timeout=10)
