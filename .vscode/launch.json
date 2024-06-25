@@ -95,8 +95,8 @@
             "args": [
                 "--type",
                 "quick",
-                "--proxy",
-                "127.0.0.1:1082",
+                // "--proxy_list",
+                // "127.0.0.1:1082",
             ],
             "console": "integratedTerminal",
             "env": {
