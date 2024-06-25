@@ -31,12 +31,12 @@ def update_mint_trade_info(m_list, proxy_info):
             coin_data['last_trade_timestamp'] = last_trade_timestamp
             _d_b.update_mint(coin_data)
             if last_trade_timestamp:
-                progress.console.print(f"[green]{symbol}[/] | (PID: {multiprocessing.current_process().pid}) Successfully recorded trade data")
+                progress.console.print(f"[green]{symbol}[/] | {proxy_info} Successfully recorded trade data")
                 success_count += 1
             else:
-                progress.console.print(f"[deep_pink2]{symbol}[/] {mint} | (PID: {multiprocessing.current_process().pid}) Failed.")
+                progress.console.print(f"[deep_pink2]{symbol}[/] {mint} | {proxy_info} Failed.")
                 fail_count += 1
-            progress.update(task, description=f"[green]Processing mints... (PID: {multiprocessing.current_process().pid}) success: {success_count}/{success_count+fail_count}, fail: {fail_count}/{success_count+fail_count}")
+            progress.update(task, description=f"[green]Processing mints... {proxy_info} success: {success_count}/{success_count+fail_count}, fail: {fail_count}/{success_count+fail_count}")
             progress.advance(task)
         _d_b.disconnect()
 
