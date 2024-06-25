@@ -73,10 +73,19 @@ if __name__ == '__main__':
         p_list = args.proxy_list.split(',') if ',' in args.proxy_list else [args.proxy_list]
         p_count = len(p_list)
 
-        for i in range(p_count):
-            tmp_list = mint_list[i::p_count]
-            tmp_proxy = p_list[i]
-            procs.append(multiprocessing.Process(target=update_mint_trade_info, args=(tmp_list, tmp_proxy)))
+        if p_count <= 10:
+            for i in range(p_count):
+                tmp_list = mint_list[i::p_count]
+                tmp_proxy = p_list[i]
+                procs.append(multiprocessing.Process(target=update_mint_trade_info, args=(tmp_list, tmp_proxy)))
+        else:
+            for i in range(0, p_count, 10):
+                sub_p_list = p_list[i:i+10]
+                sub_p_count = len(sub_p_list)
+                for j in range(sub_p_count):
+                    tmp_list = mint_list[j::sub_p_count]
+                    tmp_proxy = sub_p_list[j]
+                    procs.append(multiprocessing.Process(target=update_mint_trade_info, args=(tmp_list, tmp_proxy)))
 
         for proc in procs:
             proc.start()
