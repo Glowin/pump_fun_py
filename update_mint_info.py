@@ -1,5 +1,6 @@
 from db import MySQLDatabase
 from rich.progress import Progress
+from rich.console import Console
 from utils import Utils
 import argparse
 import multiprocessing
@@ -20,6 +21,7 @@ def update_mint_trade_info(m_list, proxy_info):
     with Progress() as progress:
         task = progress.add_task(f"[green]Processing mints... (PID: {multiprocessing.current_process().pid})", total=len(m_list))
         utils = Utils()
+        console = Console()
         _d_b = MySQLDatabase()
         _d_b.connect()
         for mint_info in m_list:
@@ -29,9 +31,9 @@ def update_mint_trade_info(m_list, proxy_info):
             coin_data['last_trade_timestamp'] = last_trade_timestamp
             _d_b.update_mint(coin_data)
             if last_trade_timestamp:
-                print(f"[green]{symbol}[/] | (PID: {multiprocessing.current_process().pid}) Successfully recorded trade data")
+                console.print(f"[green]{symbol}[/] | (PID: {multiprocessing.current_process().pid}) Successfully recorded trade data")
             else:
-                print(f"[red]{symbol}[/] {mint} | (PID: {multiprocessing.current_process().pid}) Failed.")
+                console.print(f"[red]{symbol}[/] {mint} | (PID: {multiprocessing.current_process().pid}) Failed.")
             progress.advance(task)
         _d_b.disconnect()
 
