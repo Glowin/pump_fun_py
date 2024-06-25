@@ -29,9 +29,9 @@ def update_mint_trade_info(m_list, proxy_info):
             coin_data['last_trade_timestamp'] = last_trade_timestamp
             _d_b.update_mint(coin_data)
             if last_trade_timestamp:
-                print(f"{symbol} | (PID: {multiprocessing.current_process().pid}) Successfully recorded trade data")
+                print(f"[green]{symbol}[/] | (PID: {multiprocessing.current_process().pid}) Successfully recorded trade data")
             else:
-                print(f"{symbol} | (PID: {multiprocessing.current_process().pid}) Failed to record trade data for ")
+                print(f"[red]{symbol}[/] {mint} | (PID: {multiprocessing.current_process().pid}) Failed.")
             progress.advance(task)
         _d_b.disconnect()
 
