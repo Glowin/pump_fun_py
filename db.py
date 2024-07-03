@@ -40,12 +40,12 @@ class MySQLDatabase:
         if not self.connection:
             print("Not connected to any database.")
             return None
-        cursor = self.connection.cursor()
+        cursor = self.connection.cursor(dictionary=True)  # 使用 dictionary=True 返回字典格式结果
         try:
             cursor.execute(query)
+            result = cursor.fetchall()
             self.connection.commit()
-            print("Query executed successfully")
-            return cursor.fetchall()
+            return result
         except mysql.connector.Error as err:
             print(f"Error: '{err}'")
             return None
@@ -559,6 +559,40 @@ class MySQLDatabase:
             return []
         finally:
             cursor.close()
+
+    def get_wallet_trades(self, wallet_address):
+        query = f'''
+        SELECT signature, mint, sol_amount, is_buy, user, timestamp
+        FROM pump_fun_trade 
+        WHERE user = '{wallet_address}'
+        '''
+        return self.execute_query(query)
+
+
+    def get_mint_info(self, mint):
+        query = f'''
+        SELECT mint, creator 
+        FROM pump_fun_mint 
+        WHERE mint = '{mint}'
+        '''
+        return self.execute_query(query)
+
+    def upsert_wallet_score(self, data):
+        query = '''
+            INSERT INTO pump_fun_address (address, score, `1d_pnl`, `7d_pnl`, `30d_pnl`, updatedAt)
+            VALUES ('%(address)s', %(score)s, %(1d_pnl)s, %(7d_pnl)s, %(30d_pnl)s, %(updatedAt)s)
+            ON DUPLICATE KEY UPDATE 
+            score = VALUES(score),
+            `1d_pnl` = VALUES(`1d_pnl`),
+            `7d_pnl` = VALUES(`7d_pnl`),
+            `30d_pnl` = VALUES(`30d_pnl`),
+            updatedAt = VALUES(updatedAt);
+        '''
+        return self.execute_update(query % data)
+
+    def get_unique_wallet_addresses_batch(self, offset=0, batch_size=100):
+        query = f'SELECT DISTINCT user FROM pump_fun_trade LIMIT {batch_size} OFFSET {offset}'
+        return self.execute_query(query)
 
 
     def __del__(self):
