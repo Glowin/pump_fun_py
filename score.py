@@ -20,11 +20,7 @@ def calculate_wallet_pnl_and_score(wallet_address, db):
     }
 
     for trade in wallet_trades:
-        mint_info = db.get_mint_info(trade['mint'])
-        if not mint_info:
-            continue
-        mint_info = mint_info[0]
-        is_creator = (mint_info['creator'] == wallet_address)
+        is_creator = (trade['creator'] == wallet_address)
 
         # 盈利计算
         trade_value = trade['sol_amount'] / 1e9  # Assuming sol_amount is in lamports

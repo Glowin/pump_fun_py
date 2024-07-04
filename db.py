@@ -562,8 +562,10 @@ class MySQLDatabase:
 
     def get_wallet_trades(self, wallet_address):
         query = f'''
-        SELECT signature, mint, sol_amount, is_buy, user, timestamp
-        FROM pump_fun_trade 
+        SELECT signature, m.mint, sol_amount, is_buy, user, timestamp, m.creator
+        FROM pump_fun_trade t
+        left join pump_fun_mint m
+        on t.mint = m.mint
         WHERE user = '{wallet_address}'
         '''
         return self.execute_query(query)
