@@ -41,6 +41,7 @@ def update_mint_trade_info(m_list, proxy_info):
         _d_b.disconnect()
 
 if __name__ == '__main__':
+    PROXY_BATCH_NUMBER = 10
     while True:
         # Initialize the database connection
         db = MySQLDatabase()
@@ -73,14 +74,14 @@ if __name__ == '__main__':
         p_list = args.proxy_list.split(',') if ',' in args.proxy_list else [args.proxy_list]
         p_count = len(p_list)
 
-        if p_count <= 10:
+        if p_count <= PROXY_BATCH_NUMBER:
             for i in range(p_count):
                 tmp_list = mint_list[i::p_count]
                 tmp_proxy = p_list[i]
                 procs.append(multiprocessing.Process(target=update_mint_trade_info, args=(tmp_list, tmp_proxy)))
         else:
-            for i in range(0, p_count, 10):
-                sub_p_list = p_list[i:i+10]
+            for i in range(0, p_count, PROXY_BATCH_NUMBER):
+                sub_p_list = p_list[i:i+PROXY_BATCH_NUMBER]
                 sub_p_count = len(sub_p_list)
                 for j in range(sub_p_count):
                     tmp_list = mint_list[j::sub_p_count]
