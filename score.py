@@ -44,9 +44,9 @@ def calculate_wallet_pnl_and_score(wallet_address, db):
         for period, start_time in time_ranges.items():
             if trade['timestamp'] >= start_time:
                 if trade['is_buy']:
-                    sol_balance[period] -= trade_value
+                    sol_balance[period] -= trade_value * 1.01
                 else:
-                    sol_balance[period] += trade_value
+                    sol_balance[period] += trade_value * 0.99
                 total_pnl[period] += trade_value
 
     # 考虑未卖出的代币余额
