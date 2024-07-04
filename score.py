@@ -25,9 +25,9 @@ def calculate_wallet_pnl_and_score(wallet_address, db):
         # 盈利计算
         trade_value = trade['sol_amount'] / 1e9  # Assuming sol_amount is in lamports
         if trade['is_buy']:
-            sol_balance['all'] -= trade_value
+            sol_balance['all'] -= trade_value * 1.01 # include pump.fun fee
         else:
-            sol_balance['all'] += trade_value
+            sol_balance['all'] += trade_value * 0.99 # include pump.fun fee
 
         # 时间权重计算
         time_diff = current_time - trade['timestamp']
