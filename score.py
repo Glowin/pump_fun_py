@@ -8,7 +8,6 @@ def calculate_wallet_pnl_and_score(wallet_address, db):
         return {'address': wallet_address, 'score': 0, '1d_pnl': 0, '7d_pnl': 0, '30d_pnl': 0}
 
     total_score = 0
-    total_pnl = { '1d': 0, '7d': 0, '30d': 0 }
     sol_balance = { '1d': 0, '7d': 0, '30d': 0, 'all': 0 }
     current_time = datetime.now().timestamp()
 
@@ -47,15 +46,11 @@ def calculate_wallet_pnl_and_score(wallet_address, db):
                     sol_balance[period] -= trade_value * 1.01
                 else:
                     sol_balance[period] += trade_value * 0.99
-                total_pnl[period] += trade_value
 
     # 考虑未卖出的代币余额
     total_score += sol_balance['all']
-    pnl_1d = total_pnl['1d'] + sol_balance['1d']
-    pnl_7d = total_pnl['7d'] + sol_balance['7d']
-    pnl_30d = total_pnl['30d'] + sol_balance['30d']
 
-    return {'address': wallet_address, 'score': total_score, '1d_pnl': pnl_1d, '7d_pnl': pnl_7d, '30d_pnl': pnl_30d, 'updatedAt': int(current_time)}
+    return {'address': wallet_address, 'score': total_score, '1d_pnl': sol_balance['1d'], '7d_pnl': sol_balance['7d'], '30d_pnl': sol_balance['30d'], 'updatedAt': int(current_time)}
 
 if __name__ == '__main__':
     db = MySQLDatabase()
