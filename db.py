@@ -562,7 +562,7 @@ class MySQLDatabase:
 
     def get_wallet_trades(self, wallet_address):
         query = f'''
-        SELECT signature, m.mint, sol_amount, is_buy, user, timestamp, m.creator
+        SELECT signature, m.mint, sol_amount, token_amount, is_buy, user, timestamp, m.creator
         FROM pump_fun_trade t
         left join pump_fun_mint m
         on t.mint = m.mint
@@ -593,9 +593,27 @@ class MySQLDatabase:
         return self.execute_update(query % data)
 
     def get_unique_wallet_addresses_batch(self, offset=0, batch_size=100):
-        query = f'SELECT DISTINCT user FROM pump_fun_trade LIMIT {batch_size} OFFSET {offset}'
+        query = f'SELECT DISTINCT user FROM pump_fun_trade order by user LIMIT {batch_size} OFFSET {offset}'
         return self.execute_query(query)
 
+    def get_last_trade_for_mint(self, mint):
+        query = f'''
+        SELECT sol_amount, token_amount, timestamp
+        FROM pump_fun_trade
+        WHERE mint = '{mint}'
+        AND timestamp = (
+            SELECT MAX(timestamp)
+            FROM pump_fun_trade
+            WHERE mint = '{mint}'
+        );
+        '''
+        result = self.execute_query(query)
+        return result[0] if result else None
+
+    def get_total_unique_wallets(self):
+        query = "SELECT COUNT(DISTINCT user) as count FROM pump_fun_trade"
+        result = self.execute_query(query)
+        return result[0]['count'] if result else 0
 
     def __del__(self):
         self.disconnect()
