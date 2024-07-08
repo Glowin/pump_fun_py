@@ -192,13 +192,7 @@ class Utils:
             'Origin': 'https://pump.fun',
             'Pragma': 'no-cache',
             'Referer': 'https://pump.fun/',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'cross-site',
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"macOS"',
         }
         offset = 0
         trade_list = []
@@ -215,7 +209,7 @@ class Utils:
             retries = 0
             while retries < max_retries:
                 try:
-                    response = requests.get(url, headers=headers, proxies=proxies, timeout=10)
+                    response = requests.get(url, headers=headers, proxies=proxies, timeout=100)
                     response.raise_for_status()  # Check for HTTP errors
                     break
                 except requests.exceptions.RequestException as e:
