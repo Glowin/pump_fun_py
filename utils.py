@@ -87,7 +87,7 @@ class Utils:
                     break
             except (requests.exceptions.RequestException, requests.exceptions.ProxyError) as e:
                 retries += 1
-                print(f"Connection issue. Retrying {retries}/{max_retries}...")
+                print(f"get_coin_data Connection issue. Retrying {retries}/{max_retries}...")
                 print(str(e))
                 # Check for specific SOCKS5 proxy error
                 if "Failed to establish a new connection: SOCKS5 proxy server sent invalid data" in str(e):
@@ -151,7 +151,7 @@ class Utils:
                 break
             except requests.exceptions.RequestException as e:
                 retries += 1
-                print(f"Connection issue. Retrying {retries}/{max_retries}...")
+                print(f"get_coin_list Connection issue. Retrying {retries}/{max_retries}...")
                 print(str(e))
                 time.sleep(1)
         else:
