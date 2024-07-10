@@ -37,7 +37,7 @@ def calculate_wallet_pnl_and_score(wallet_address, db):
             trade_value *= 0.5  # 假设 creator 影响为50%
 
         # 累加到总得分
-        total_score += trade_value * time_weight
+        total_score += sol_balance['all'] * time_weight
 
         # 分别计算1d, 7d, 30d的PNL
         for period, start_time in time_ranges.items():
@@ -68,6 +68,7 @@ if __name__ == '__main__':
             wallet_address = wallet['user']
             result = calculate_wallet_pnl_and_score(wallet_address, db)
             db.upsert_wallet_score(result)  # 计算后立即保存到数据库
+            print(str(result))
 
         offset += batch_size
 
