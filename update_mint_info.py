@@ -28,6 +28,8 @@ def update_mint_trade_info(m_list, proxy_info):
             mint, creator, symbol = mint_info['mint'], mint_info['creator'], mint_info['symbol']
             coin_data = utils.get_coin_data(mint, proxy_info)
             last_trade_timestamp = utils.get_trade_list(mint, creator, symbol, proxy=proxy_info)
+            if last_trade_timestamp is None:
+                continue
             coin_data['last_trade_timestamp'] = last_trade_timestamp
             _d_b.update_mint(coin_data)
             if last_trade_timestamp:
