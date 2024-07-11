@@ -77,7 +77,7 @@ class Utils:
             proxies = None
 
         retries = 0
-        max_retries = 30
+        max_retries = 3
         response = None  # Ensure response is defined
         while retries < max_retries:
             try:
@@ -142,7 +142,7 @@ class Utils:
             proxies = None
 
         retries = 0
-        max_retries = 30
+        max_retries = 3
         response = None  # Ensure response is defined
         while retries < max_retries:
             try:
