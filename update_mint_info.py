@@ -20,7 +20,7 @@ def update_mint_trade_info(m_list, proxy_info):
     with Progress() as progress:
         success_count =0
         fail_count = 0
-        task = progress.add_task(f"[green]Processing mints... (PID: {multiprocessing.current_process().pid})", total=len(m_list))
+        task = progress.add_task(f"[green]Processing mints... {proxy_info} success: {success_count}/{success_count+fail_count}, fail: {fail_count}/{success_count+fail_count}", total=len(m_list))
         utils = Utils()
         _d_b = MySQLDatabase()
         _d_b.connect()
