@@ -195,9 +195,10 @@ class Utils:
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         }
         offset = 0
+        page_size = 200
         trade_list = []
         for _ in range(trade_page):
-            url = f'{URL_PREFIX}/trades/{mint}?limit=200&offset={offset}'
+            url = f'{URL_PREFIX}/trades/{mint}?limit={page_size}&offset={offset}'
             if proxy and proxy != 'None':
                 proxies = {
                     'http': 'socks5h://' + proxy,
@@ -209,7 +210,7 @@ class Utils:
             retries = 0
             while retries < max_retries:
                 try:
-                    response = requests.get(url, headers=headers, proxies=proxies, timeout=100)
+                    response = requests.get(url, headers=headers, proxies=proxies, timeout=10)
                     response.raise_for_status()  # Check for HTTP errors
                     break
                 except requests.exceptions.RequestException as e:
@@ -224,9 +225,9 @@ class Utils:
                 try:
                     current_trade_list = response.json()
                     trade_list.extend(current_trade_list)
-                    if len(current_trade_list) < 200:
+                    if len(current_trade_list) < page_size:
                         break
-                    offset += 200
+                    offset += page_size
                 except ValueError as e:
                     print("Error parsing JSON response:", e)
                     return None
