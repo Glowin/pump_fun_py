@@ -184,6 +184,9 @@ class Utils:
     def get_trade_list(mint, creator, symbol, proxy):
         max_retries = 1
         trade_page = 3
+        offset = 0
+        page_size = 200
+        trade_list = []
         headers = {
             'Accept': '*/*',
             'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -194,9 +197,6 @@ class Utils:
             'Referer': 'https://pump.fun/',
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         }
-        offset = 0
-        page_size = 200
-        trade_list = []
         for _ in range(trade_page):
             url = f'{URL_PREFIX}/trades/{mint}?limit={page_size}&offset={offset}'
             if proxy and proxy != 'None':
