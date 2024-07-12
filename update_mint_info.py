@@ -28,9 +28,15 @@ def update_mint_trade_info(m_list, proxy_info):
             mint, creator, symbol = mint_info['mint'], mint_info['creator'], mint_info['symbol']
             coin_data = utils.get_coin_data(mint, proxy_info)
             if coin_data is None:
+                fail_count += 1
+                progress.update(task, description=f"[green]Processing mints... {proxy_info} success: {success_count}/{success_count+fail_count}, fail: {fail_count}/{success_count+fail_count}")
+                progress.advance(task)
                 continue
             last_trade_timestamp = utils.get_trade_list(mint, creator, symbol, proxy=proxy_info)
             if last_trade_timestamp is None:
+                fail_count += 1
+                progress.update(task, description=f"[green]Processing mints... {proxy_info} success: {success_count}/{success_count+fail_count}, fail: {fail_count}/{success_count+fail_count}")
+                progress.advance(task)
                 continue
             coin_data['last_trade_timestamp'] = last_trade_timestamp
             _d_b.update_mint(coin_data)
