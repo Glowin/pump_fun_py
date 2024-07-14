@@ -567,6 +567,7 @@ class MySQLDatabase:
         left join pump_fun_mint m
         on t.mint = m.mint
         WHERE user = '{wallet_address}'
+        order by t.timestamp DESC
         '''
         return self.execute_query(query)
 
@@ -614,6 +615,13 @@ class MySQLDatabase:
         query = "SELECT COUNT(DISTINCT user) as count FROM pump_fun_trade"
         result = self.execute_query(query)
         return result[0]['count'] if result else 0
+
+    def insert_mint_to_trade_fix(self, mint):
+        query = f'''
+            INSERT IGNORE INTO pump_fun_mint_trade_fix (mint)
+            VALUES ('{mint}');
+        '''
+        return self.execute_update(query)
 
     def __del__(self):
         self.disconnect()

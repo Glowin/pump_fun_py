@@ -79,8 +79,8 @@ class WalletScorer:
                     last_trade_sol_amount = last_trade['sol_amount'] / 1e9
                     token_value = (balance / last_trade_token_amount) * last_trade_sol_amount
                     score += token_value
-            else: # 卖的比买的多，为老鼠仓
-                score = 0
+            elif balance < -100: # 卖的比买的多，为老鼠仓
+                db.insert_mint_to_trade_fix(mint)
 
         return {
             'address': wallet_address,
