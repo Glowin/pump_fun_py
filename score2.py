@@ -13,6 +13,9 @@ class WalletScorer:
         self.current_timestamp = int(time.time())
         self.lambda_param = 0.3  # 控制衰减速度
         self.plateau_days = 7  # 最近7天保持高权重
+        self.high_frequency_threshold = 10  # 高频交易阈值，例如1分钟内超过10笔交易
+        self.high_frequency_time_threshold = 60  # 高频交易时间阈值，单位为秒
+        self.small_trade_threshold = 0.2  # 小额交易阈值，例如小于1 SOL
 
     def calculate_time_weight(self, trade_timestamp):
         days_passed = (self.current_timestamp - trade_timestamp) / 86400  # 转换为天数
@@ -23,6 +26,17 @@ class WalletScorer:
         else:
             # 7天后开始指数衰减
             return math.exp(-self.lambda_param * (days_passed - self.plateau_days))
+
+    def is_high_frequency_trading(self, trades):
+        if len(trades) < self.high_frequency_threshold:
+            return False
+        trades.sort(key=lambda x: x['timestamp'])
+        for i in range(len(trades) - self.high_frequency_threshold + 1):
+            if trades[i + self.high_frequency_threshold - 1]['timestamp'] - trades[i]['timestamp'] < self.high_frequency_time_threshold:
+                # 检查是否为小额交易
+                if all(trade['sol_amount'] / 1e9 < self.small_trade_threshold for trade in trades[i:i + self.high_frequency_threshold]):
+                    return True
+        return False
 
     def calculate_score_and_pnl(self, wallet_address, db):
         trades = db.get_wallet_trades(wallet_address)
@@ -39,37 +53,47 @@ class WalletScorer:
         seven_days_ago = self.current_timestamp - 604800
         thirty_days_ago = self.current_timestamp - 2592000
 
+        trades_by_mint = {}
         for trade in trades:
             mint = trade['mint']
-            sol_amount = trade['sol_amount'] / 1e9  # Convert lamports to SOL
-            token_amount = trade['token_amount'] / 1e6  # Correct the token amount
-            is_buy = trade['is_buy']
-            timestamp = trade['timestamp']
-            creator = trade['creator']
+            if mint not in trades_by_mint:
+                trades_by_mint[mint] = []
+            trades_by_mint[mint].append(trade)
 
-            time_weight = self.calculate_time_weight(timestamp)
+        for mint, mint_trades in trades_by_mint.items():
+            if self.is_high_frequency_trading(mint_trades):
+                continue
 
-            if is_buy:
-                trade_pnl = -sol_amount * 1.01  # 买入时，实际花费的 SOL 增加 1%
-            else:
-                trade_pnl = sol_amount * 0.99  # 卖出时，实际获得的 SOL 减少 1%
+            for trade in mint_trades:
+                sol_amount = trade['sol_amount'] / 1e9  # Convert lamports to SOL
+                token_amount = trade['token_amount'] / 1e6  # Correct the token amount
+                is_buy = trade['is_buy']
+                timestamp = trade['timestamp']
+                creator = trade['creator']
 
-            if mint not in token_balances:
-                token_balances[mint] = 0
-            token_balances[mint] += token_amount if is_buy else -token_amount
+                time_weight = self.calculate_time_weight(timestamp)
 
-            if creator == wallet_address:
-                time_weight *= 1e-6  # 将创建者的惩罚权重设为 1e-6
-                token_balances[mint] = 0
+                if is_buy:
+                    trade_pnl = -sol_amount * 1.01  # 买入时，实际花费的 SOL 增加 1%
+                else:
+                    trade_pnl = sol_amount * 0.99  # 卖出时，实际获得的 SOL 减少 1%
 
-            score += trade_pnl * time_weight
+                if mint not in token_balances:
+                    token_balances[mint] = 0
+                token_balances[mint] += token_amount if is_buy else -token_amount
 
-            if timestamp >= one_day_ago:
-                pnl_1d += trade_pnl
-            if timestamp >= seven_days_ago:
-                pnl_7d += trade_pnl
-            if timestamp >= thirty_days_ago:
-                pnl_30d += trade_pnl
+                if creator == wallet_address:
+                    time_weight *= 1e-6  # 将创建者的惩罚权重设为 1e-6
+                    token_balances[mint] = 0
+
+                score += trade_pnl * time_weight
+
+                if timestamp >= one_day_ago:
+                    pnl_1d += trade_pnl
+                if timestamp >= seven_days_ago:
+                    pnl_7d += trade_pnl
+                if timestamp >= thirty_days_ago:
+                    pnl_30d += trade_pnl
 
         for mint, balance in token_balances.items():
             if balance > 0:
@@ -81,6 +105,7 @@ class WalletScorer:
                     score += token_value
             elif balance < -100: # 卖的比买的多，为老鼠仓
                 db.insert_mint_to_trade_fix(mint)
+                score = 0
 
         return {
             'address': wallet_address,
