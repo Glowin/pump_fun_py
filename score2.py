@@ -121,7 +121,7 @@ class WalletScorer:
         db.connect()
         
         offset = start_offset
-        batch_size = 1000
+        batch_size = 50000
         
         while offset < end_offset:
             wallets = db.get_unique_wallet_addresses_batch(offset, batch_size)
