@@ -10,15 +10,14 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 class WalletScorer:
     def __init__(self):
-        self.current_timestamp = int(time.time())
         self.lambda_param = 0.3  # 控制衰减速度
         self.plateau_days = 7  # 最近7天保持高权重
         self.high_frequency_threshold = 10  # 高频交易阈值，例如1分钟内超过10笔交易
         self.high_frequency_time_threshold = 60  # 高频交易时间阈值，单位为秒
-        self.small_trade_threshold = 0.2  # 小额交易阈值，例如小于1 SOL
+        self.small_trade_threshold = 1  # 小额交易阈值，例如小于1 SOL
 
-    def calculate_time_weight(self, trade_timestamp):
-        days_passed = (self.current_timestamp - trade_timestamp) / 86400  # 转换为天数
+    def calculate_time_weight(self, trade_timestamp, current_timestamp):
+        days_passed = (current_timestamp - trade_timestamp) / 86400  # 转换为天数
         
         if days_passed <= self.plateau_days:
             # 最近7天内的交易保持最高权重
@@ -39,6 +38,7 @@ class WalletScorer:
         return False
 
     def calculate_score_and_pnl(self, wallet_address, db):
+        current_timestamp = int(time.time())
         trades = db.get_wallet_trades(wallet_address)
         if not trades:
             return None
@@ -49,9 +49,9 @@ class WalletScorer:
         pnl_30d = 0
         token_balances = {}
 
-        one_day_ago = self.current_timestamp - 86400
-        seven_days_ago = self.current_timestamp - 604800
-        thirty_days_ago = self.current_timestamp - 2592000
+        one_day_ago = current_timestamp - 86400
+        seven_days_ago = current_timestamp - 604800
+        thirty_days_ago = current_timestamp - 2592000
 
         trades_by_mint = {}
         for trade in trades:
@@ -71,7 +71,7 @@ class WalletScorer:
                 timestamp = trade['timestamp']
                 creator = trade['creator']
 
-                time_weight = self.calculate_time_weight(timestamp)
+                time_weight = self.calculate_time_weight(timestamp, current_timestamp)
 
                 if is_buy:
                     trade_pnl = -sol_amount * 1.01  # 买入时，实际花费的 SOL 增加 1%
@@ -113,7 +113,7 @@ class WalletScorer:
             '1d_pnl': pnl_1d,
             '7d_pnl': pnl_7d,
             '30d_pnl': pnl_30d,
-            'updatedAt': self.current_timestamp
+            'updatedAt': current_timestamp
         }
 
     def process_wallets(self, start_offset, end_offset):
