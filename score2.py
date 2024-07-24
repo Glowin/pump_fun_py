@@ -14,7 +14,7 @@ class WalletScorer:
         self.plateau_days = 7  # 最近7天保持高权重
         self.high_frequency_threshold = 10  # 高频交易阈值，例如1分钟内超过10笔交易
         self.high_frequency_time_threshold = 60  # 高频交易时间阈值，单位为秒
-        self.small_trade_threshold = 1  # 小额交易阈值，例如小于1 SOL
+        self.small_trade_threshold = 0.1  # 小额交易阈值，例如小于 0.1 SOL
 
     def calculate_time_weight(self, trade_timestamp, current_timestamp):
         days_passed = (current_timestamp - trade_timestamp) / 86400  # 转换为天数
