@@ -142,7 +142,7 @@ class Utils:
             proxies = None
 
         retries = 0
-        max_retries = 3
+        max_retries = 1
         response = None  # Ensure response is defined
         while retries < max_retries:
             try:
@@ -183,9 +183,9 @@ class Utils:
     @staticmethod
     def get_trade_list(mint, creator, symbol, proxy):
         max_retries = 1
-        trade_page = 3
+        trade_page = 1
         offset = 0
-        page_size = 200
+        page_size = 100
         trade_list = []
         headers = {
             'Accept': '*/*',
@@ -210,7 +210,7 @@ class Utils:
             retries = 0
             while retries < max_retries:
                 try:
-                    response = requests.get(url, headers=headers, proxies=proxies, timeout=10)
+                    response = requests.get(url, headers=headers, proxies=proxies, timeout=3)
                     response.raise_for_status()  # Check for HTTP errors
                     break
                 except requests.exceptions.RequestException as e:
