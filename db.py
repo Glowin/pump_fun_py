@@ -29,6 +29,9 @@ class MySQLDatabase:
         except mysql.connector.Error as err:
             print(f"Error: '{err}'")
             self.connection = None
+
+    def __del__(self):
+        self.disconnect()
     
     def disconnect(self):
         if self.connection:
@@ -52,13 +55,16 @@ class MySQLDatabase:
         finally:
             cursor.close()
 
-    def execute_update(self, query):
+    def execute_update(self, query, params=None):
         if not self.connection:
             print("Not connected to any database.")
             return False
         cursor = self.connection.cursor()
         try:
-            cursor.execute(query)
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
             self.connection.commit()
             return True
         except mysql.connector.Error as err:
@@ -623,11 +629,31 @@ class MySQLDatabase:
         '''
         return self.execute_update(query)
 
-    def __del__(self):
-        self.disconnect()
+    def get_smart_wallets(self):
+        query = "SELECT address FROM pump_fun_address WHERE score > 70"
+        return self.execute_query(query)
+    
+    def insert_smart_trade(self, trade_data):
+        query = """
+        INSERT IGNORE INTO pump_fun_smart_trade 
+        (signature, mint, user, is_buy, sol_amount, timestamp)
+        VALUES (%(signature)s, %(mint)s, %(user)s, %(is_buy)s, %(sol_amount)s, %(timestamp)s)
+        """
+        return self.execute_update(query, trade_data)
 
-# Example usage:
-# db = MySQLDatabase(host="localhost", user="root", password="password", database="test_db")
-# db.connect()
-# db.execute_query("SELECT * FROM users")
-# db.disconnect()
+    def check_and_mark_message_sent(self, signature):
+        query = """
+        UPDATE pump_fun_smart_trade
+        SET message_sent = TRUE
+        WHERE signature = %s AND message_sent = FALSE
+        """
+        return self.execute_update(query, (signature,))
+
+    def get_unsent_smart_trades(self, limit=100):
+        query = """
+        SELECT * FROM pump_fun_smart_trade
+        WHERE message_sent = FALSE
+        ORDER BY timestamp DESC
+        LIMIT %s
+        """
+        return self.execute_query(query, (limit,))

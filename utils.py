@@ -4,6 +4,9 @@ import requests
 from config import RPC, PUB_KEY, client
 from solana.transaction import Signature
 from db import MySQLDatabase
+import asyncio
+from tg_bot import TelegramBot
+from datetime import datetime, timedelta
 
 # Initialize the database connection
 db = MySQLDatabase()
@@ -11,6 +14,19 @@ db = MySQLDatabase()
 URL_PREFIX = "https://frontend-api.pump.fun"
 
 class Utils:
+    def __init__(self):
+        self.tg_bot = TelegramBot()
+        self.smart_wallets = set()
+        self.load_smart_wallets()
+
+    def load_smart_wallets(self):
+        db.connect()
+        smart_wallets = db.get_smart_wallets()
+        self.smart_wallets = set(wallet['address'] for wallet in smart_wallets)
+        db.disconnect()
+
+    async def send_telegram_message(self, message):
+        await self.tg_bot.send_message(message)
     
     @staticmethod
     def find_data(data, field):
@@ -181,7 +197,17 @@ class Utils:
             return None
 
     @staticmethod
-    def get_trade_list(mint, creator, symbol, proxy):
+    def escape_markdown(text):
+        special_chars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+        return ''.join('\\' + char if char in special_chars else char for char in str(text))
+
+    @staticmethod
+    def format_timestamp(timestamp):
+        utc_time = datetime.utcfromtimestamp(timestamp)
+        utc_8_time = utc_time + timedelta(hours=8)
+        return utc_8_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    def get_trade_list(self, mint, creator, symbol, proxy):
         max_retries = 1
         trade_page = 1
         offset = 0
@@ -256,6 +282,37 @@ class Utils:
         else:
             db.update_rug_status(mint, 0)
 
+        # Check for smart wallet trades
+        messages = []
+        for trade in trade_list:
+            if trade['user'] in self.smart_wallets:
+                # Insert the smart trade into the database
+                smart_trade_data = {
+                    'signature': trade['signature'],
+                    'mint': trade['mint'],
+                    'user': trade['user'],
+                    'is_buy': trade['is_buy'],
+                    'sol_amount': trade['sol_amount'] / 1e9,
+                    'timestamp': trade['timestamp']
+                }
+                db.insert_smart_trade(smart_trade_data)
+
+                # Check if message has been sent before
+                if db.check_and_mark_message_sent(trade['signature']):
+                    formatted_time = self.format_timestamp(trade['timestamp'])
+                    message = f'''🚨 Smart Wallet Alert 🚨
+Symbol: {self.escape_markdown(symbol)}
+Mint: `{self.escape_markdown(trade['mint'])}`
+User: {self.escape_markdown('...' + trade['user'][-6:])}
+Action: {self.escape_markdown('Buy' if trade['is_buy'] else 'Sell')}
+Amount: {self.escape_markdown(f"{trade['sol_amount'] / 1e9:.4f}")} SOL
+Time \(UTC\+8\): {self.escape_markdown(formatted_time)}'''
+                    messages.append(message)
+
+        # Send all messages at once
+        if messages:
+            asyncio.run(self.send_all_messages(messages))
+
         # 批量记录交易到数据库中
         try:
             success = db.insert_trades_bulk(trade_list)
@@ -267,6 +324,10 @@ class Utils:
             return max(trade['timestamp'] for trade in trade_list) * 1000
         else:
             return None
+
+    async def send_all_messages(self, messages):
+        tasks = [self.send_telegram_message(message) for message in messages]
+        await asyncio.gather(*tasks)
 
     @staticmethod
     def confirm_txn(txn_sig, max_retries=20, retry_interval=3):
