@@ -7,3 +7,5 @@ python-dotenv
 mysql-connector-python
 rich
 python-telegram-bot
+aiohttp
+asyncio
