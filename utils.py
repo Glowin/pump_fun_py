@@ -15,7 +15,6 @@ URL_PREFIX = "https://frontend-api.pump.fun"
 
 class Utils:
     def __init__(self):
-        self.tg_bot = TelegramBot()
         self.smart_wallets = set()
         self.load_smart_wallets()
 
@@ -208,8 +207,6 @@ class Utils:
         return utc_8_time.strftime('%Y-%m-%d %H:%M:%S')
 
     def get_trade_list(self, mint, creator, symbol, proxy):
-        if self.tg_bot is None:
-            self.tg_bot = TelegramBot(proxy)
         max_retries = 1
         trade_page = 1
         offset = 0
@@ -313,7 +310,7 @@ Time \(UTC\+8\): {self.escape_markdown(formatted_time)}'''
 
         # Send all messages at once
         if messages:
-            asyncio.run(self.send_all_messages(messages))
+            self.send_all_messages_sync(messages, proxy)
 
         # 批量记录交易到数据库中
         try:
@@ -327,9 +324,10 @@ Time \(UTC\+8\): {self.escape_markdown(formatted_time)}'''
         else:
             return None
 
-    async def send_all_messages(self, messages):
-        tasks = [self.send_telegram_message(message) for message in messages]
-        await asyncio.gather(*tasks)
+    def send_all_messages_sync(self, messages, proxy):
+        for message in messages:
+            tg_bot = TelegramBot(proxy)
+            tg_bot.send_message_sync(message)
 
     @staticmethod
     def confirm_txn(txn_sig, max_retries=20, retry_interval=3):

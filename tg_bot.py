@@ -16,7 +16,7 @@ class TelegramBot:
         self.bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
         self.chat_id = os.getenv("TELEGRAM_CHAT_ID")
         proxy_url = f"socks5://{proxy}" if proxy else None
-        self.trequest = HTTPXRequest(connection_pool_size=20, proxy_url=proxy_url)
+        self.trequest = HTTPXRequest(connection_pool_size=1, proxy_url=proxy_url)
         self.bot = Bot(token=self.bot_token, request=self.trequest)
 
     async def send_message(self, message):
@@ -31,4 +31,15 @@ class TelegramBot:
             logging.error(f"Message content: {message}")
 
     def send_message_sync(self, message):
-        asyncio.run(self.send_message(message))
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(self._send_and_shutdown(message))
+        finally:
+            loop.close()
+
+    async def _send_and_shutdown(self, message):
+        try:
+            await self.send_message(message)
+        finally:
+            await self.trequest.shutdown()
