@@ -208,6 +208,8 @@ class Utils:
         return utc_8_time.strftime('%Y-%m-%d %H:%M:%S')
 
     def get_trade_list(self, mint, creator, symbol, proxy):
+        if self.tg_bot is None:
+            self.tg_bot = TelegramBot(proxy)
         max_retries = 1
         trade_page = 1
         offset = 0

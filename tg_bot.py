@@ -12,10 +12,11 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
 class TelegramBot:
-    def __init__(self):
+    def __init__(self, proxy=None):
         self.bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
         self.chat_id = os.getenv("TELEGRAM_CHAT_ID")
-        self.trequest = HTTPXRequest(connection_pool_size=20)
+        proxy_url = f"socks5://{proxy}" if proxy else None
+        self.trequest = HTTPXRequest(connection_pool_size=20, proxy_url=proxy_url)
         self.bot = Bot(token=self.bot_token, request=self.trequest)
 
     async def send_message(self, message):

@@ -6,6 +6,6 @@ structlog # 用于结构化日志记录。
 python-dotenv
 mysql-connector-python
 rich
-python-telegram-bot
+python-telegram-bot[socks]
 aiohttp
 asyncio
