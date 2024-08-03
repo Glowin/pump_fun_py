@@ -303,12 +303,12 @@ class Utils:
                     action_text = "Buy" if trade['is_buy'] else "Sell"
                     message = f'''🚨 *Smart Wallet Alert* 🚨
 
-Symbol: `{self.escape_markdown(symbol)}`
+Symbol: {self.escape_markdown(symbol)}
 Mint: `{self.escape_markdown(trade['mint'])}`
-User: `{self.escape_markdown('...' + trade['user'][-6:])}`
+User: {self.escape_markdown('...' + trade['user'][-6:])}
 Action: {action_emoji} *{action_text}*
-Amount: `{self.escape_markdown(f"{trade['sol_amount'] / 1e9:.4f}")} SOL`
-Time \(UTC\+8\): `{self.escape_markdown(formatted_time)}`'''
+Amount: {self.escape_markdown(f"{trade['sol_amount'] / 1e9:.4f}")} SOL
+Time \(UTC\+8\): {self.escape_markdown(formatted_time)}'''
                     messages.append(message)
 
         # Send all messages at once
