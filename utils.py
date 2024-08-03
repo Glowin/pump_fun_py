@@ -299,13 +299,16 @@ class Utils:
                 # Check if message has been sent before
                 if db.check_and_mark_message_sent(trade['signature']):
                     formatted_time = self.format_timestamp(trade['timestamp'])
-                    message = f'''🚨 Smart Wallet Alert 🚨
-Symbol: {self.escape_markdown(symbol)}
+                    action_emoji = "🟢" if trade['is_buy'] else "🔴"
+                    action_text = "Buy" if trade['is_buy'] else "Sell"
+                    message = f'''🚨 *Smart Wallet Alert* 🚨
+
+Symbol: `{self.escape_markdown(symbol)}`
 Mint: `{self.escape_markdown(trade['mint'])}`
-User: {self.escape_markdown('...' + trade['user'][-6:])}
-Action: {self.escape_markdown('Buy' if trade['is_buy'] else 'Sell')}
-Amount: {self.escape_markdown(f"{trade['sol_amount'] / 1e9:.4f}")} SOL
-Time \(UTC\+8\): {self.escape_markdown(formatted_time)}'''
+User: `{self.escape_markdown('...' + trade['user'][-6:])}`
+Action: {action_emoji} *{action_text}*
+Amount: `{self.escape_markdown(f"{trade['sol_amount'] / 1e9:.4f}")} SOL`
+Time \(UTC\+8\): `{self.escape_markdown(formatted_time)}`'''
                     messages.append(message)
 
         # Send all messages at once
