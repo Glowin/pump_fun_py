@@ -214,7 +214,7 @@ class Utils:
     def format_pnl(self, pnl):
         if pnl is None:
             return "N/A"
-        return f"{pnl:.4f}sol".replace("-", "\\-")
+        return self.escape_markdown(f"{pnl:.4f} sol")
 
     def get_trade_list(self, mint, creator, symbol, proxy):
         max_retries = 1
