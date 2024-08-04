@@ -201,8 +201,7 @@ class Utils:
         else:
             return None
 
-    @staticmethod
-    def escape_markdown(text):
+    def escape_markdown(self, text):
         special_chars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
         return ''.join('\\' + char if char in special_chars else char for char in str(text))
 
@@ -215,7 +214,7 @@ class Utils:
     def format_pnl(self, pnl):
         if pnl is None:
             return "N/A"
-        return f"{pnl:.4f}sol"
+        return f"{pnl:.4f}sol".replace("-", "\\-")
 
     def get_trade_list(self, mint, creator, symbol, proxy):
         max_retries = 1
@@ -319,7 +318,7 @@ Symbol: {self.escape_markdown(symbol)}
 Mint: `{self.escape_markdown(trade['mint'])}`
 User: {self.escape_markdown('...' + trade['user'][-6:])}
 PNL: 1day: {self.format_pnl(wallet_data['1d_pnl'])} | 7day: {self.format_pnl(wallet_data['7d_pnl'])} | 30day: {self.format_pnl(wallet_data['30d_pnl'])}
-Action: {action_emoji} *{action_text}*
+Action: {action_emoji} *{self.escape_markdown(action_text)}*
 Amount: {self.escape_markdown(f"{trade['sol_amount'] / 1e9:.4f}")} SOL
 Time \(UTC\+8\): {self.escape_markdown(formatted_time)}'''
                     messages.append(message)
