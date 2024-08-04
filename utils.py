@@ -15,14 +15,20 @@ URL_PREFIX = "https://frontend-api.pump.fun"
 
 class Utils:
     def __init__(self):
-        self.smart_wallets = set()
+        self.smart_wallets = {}
         self.load_smart_wallets()
 
     def load_smart_wallets(self):
         db.connect()
         smart_wallets = db.get_smart_wallets()
-        self.smart_wallets = set(wallet['address'] for wallet in smart_wallets)
         db.disconnect()
+        for wallet in smart_wallets:
+            self.smart_wallets[wallet['address']] = {
+                'score': wallet['score'],
+                '1d_pnl': wallet['1d_pnl'],
+                '7d_pnl': wallet['7d_pnl'],
+                '30d_pnl': wallet['30d_pnl']
+            }
 
     async def send_telegram_message(self, message):
         await self.tg_bot.send_message(message)
@@ -206,6 +212,11 @@ class Utils:
         utc_8_time = utc_time + timedelta(hours=8)
         return utc_8_time.strftime('%Y-%m-%d %H:%M:%S')
 
+    def format_pnl(self, pnl):
+        if pnl is None:
+            return "N/A"
+        return f"{pnl:.4f}sol"
+
     def get_trade_list(self, mint, creator, symbol, proxy):
         max_retries = 1
         trade_page = 1
@@ -301,11 +312,13 @@ class Utils:
                     formatted_time = self.format_timestamp(trade['timestamp'])
                     action_emoji = "🟢" if trade['is_buy'] else "🔴"
                     action_text = "Buy" if trade['is_buy'] else "Sell"
-                    message = f'''🚨 *Smart Wallet Alert* 🚨
+                    wallet_data = self.smart_wallets[trade['user']]
+                    message = f'''🚨 Smart Wallet Alert 🚨
 
 Symbol: {self.escape_markdown(symbol)}
 Mint: `{self.escape_markdown(trade['mint'])}`
 User: {self.escape_markdown('...' + trade['user'][-6:])}
+PNL: 1day: {self.format_pnl(wallet_data['1d_pnl'])} | 7day: {self.format_pnl(wallet_data['7d_pnl'])} | 30day: {self.format_pnl(wallet_data['30d_pnl'])}
 Action: {action_emoji} *{action_text}*
 Amount: {self.escape_markdown(f"{trade['sol_amount'] / 1e9:.4f}")} SOL
 Time \(UTC\+8\): {self.escape_markdown(formatted_time)}'''
@@ -314,7 +327,7 @@ Time \(UTC\+8\): {self.escape_markdown(formatted_time)}'''
         # Reverse the order of messages so that older messages are sent first
         messages.reverse()
 
-        # Send all messages at once
+        # Send all messages
         if messages:
             self.send_all_messages_sync(messages, proxy)
 

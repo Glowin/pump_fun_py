@@ -632,7 +632,11 @@ class MySQLDatabase:
         return self.execute_update(query)
 
     def get_smart_wallets(self):
-        query = "SELECT address FROM pump_fun_address WHERE score > 70"
+        query = """
+        SELECT address, score, `1d_pnl`, `7d_pnl`, `30d_pnl`
+        FROM pump_fun_address
+        WHERE score > 70
+        """
         return self.execute_query(query)
     
     def insert_smart_trade(self, trade_data):
