@@ -296,7 +296,7 @@ class Utils:
                 }
                 db.insert_smart_trade(smart_trade_data)
 
-                # Check if message has been sent before
+                # Check if message needs to be sent
                 if db.check_and_mark_message_sent(trade['signature']):
                     formatted_time = self.format_timestamp(trade['timestamp'])
                     action_emoji = "🟢" if trade['is_buy'] else "🔴"

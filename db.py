@@ -642,12 +642,30 @@ class MySQLDatabase:
         return self.execute_update(query, trade_data)
 
     def check_and_mark_message_sent(self, signature):
-        query = """
+        # First, check if the message has been sent
+        check_query = """
+        SELECT message_sent
+        FROM pump_fun_smart_trade
+        WHERE signature = %s
+        """
+        result = self.execute_query(check_query, (signature,))
+        
+        if not result:
+            # If no record found, return False (no need to send message)
+            return False
+        
+        if result[0]['message_sent']:
+            # If message already sent, return False
+            return False
+        
+        # If message not sent, update the record and return True
+        update_query = """
         UPDATE pump_fun_smart_trade
         SET message_sent = TRUE
-        WHERE signature = %s AND message_sent = FALSE
+        WHERE signature = %s
         """
-        return self.execute_update(query, (signature,))
+        self.execute_update(update_query, (signature,))
+        return True
 
     def get_unsent_smart_trades(self, limit=100):
         query = """
