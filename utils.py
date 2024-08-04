@@ -311,6 +311,9 @@ Amount: {self.escape_markdown(f"{trade['sol_amount'] / 1e9:.4f}")} SOL
 Time \(UTC\+8\): {self.escape_markdown(formatted_time)}'''
                     messages.append(message)
 
+        # Reverse the order of messages so that older messages are sent first
+        messages.reverse()
+
         # Send all messages at once
         if messages:
             self.send_all_messages_sync(messages, proxy)
