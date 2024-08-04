@@ -39,15 +39,17 @@ class MySQLDatabase:
         else:
             print("Connection is already closed or not established")
     
-    def execute_query(self, query):
+    def execute_query(self, query, params=None):
         if not self.connection:
             print("Not connected to any database.")
             return None
-        cursor = self.connection.cursor(dictionary=True)  # 使用 dictionary=True 返回字典格式结果
+        cursor = self.connection.cursor(dictionary=True)
         try:
-            cursor.execute(query)
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
             result = cursor.fetchall()
-            self.connection.commit()
             return result
         except mysql.connector.Error as err:
             print(f"Error: '{err}'")
