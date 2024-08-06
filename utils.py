@@ -214,7 +214,7 @@ class Utils:
     def format_pnl(self, pnl):
         if pnl is None:
             return "N/A"
-        return self.escape_markdown(f"{pnl:.4f} sol")
+        return self.escape_markdown(f"{pnl:.4f} SOL")
 
     def get_trade_list(self, mint, creator, symbol, proxy):
         max_retries = 1
@@ -317,10 +317,10 @@ class Utils:
 Symbol: {self.escape_markdown(symbol)}
 Mint: `{self.escape_markdown(trade['mint'])}`
 User: {self.escape_markdown('...' + trade['user'][-6:])}
-PNL: 1day: {self.format_pnl(wallet_data['1d_pnl'])} \| 7day: {self.format_pnl(wallet_data['7d_pnl'])} \| 30day: {self.format_pnl(wallet_data['30d_pnl'])}
 Action: {action_emoji} *{self.escape_markdown(action_text)}*
 Amount: {self.escape_markdown(f"{trade['sol_amount'] / 1e9:.4f}")} SOL
-Time \(UTC\+8\): {self.escape_markdown(formatted_time)}'''
+Time \(UTC\+8\): {self.escape_markdown(formatted_time)}
+User PNL: 1day: {self.format_pnl(wallet_data['1d_pnl'])} \| 7day: {self.format_pnl(wallet_data['7d_pnl'])} \| 30day: {self.format_pnl(wallet_data['30d_pnl'])}'''
                     messages.append(message)
 
         # Reverse the order of messages so that older messages are sent first
