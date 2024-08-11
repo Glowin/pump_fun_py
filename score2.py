@@ -48,6 +48,7 @@ class WalletScorer:
         pnl_7d = 0
         pnl_30d = 0
         token_balances = {}
+        rat_trade_count = 0  # 记录老鼠仓行为次数
 
         one_day_ago = current_timestamp - 86400
         seven_days_ago = current_timestamp - 604800
@@ -64,6 +65,8 @@ class WalletScorer:
             if self.is_high_frequency_trading(mint_trades):
                 continue
 
+            mint_score = 0
+            mint_balance = 0
             for trade in mint_trades:
                 sol_amount = trade['sol_amount'] / 1e9  # Convert lamports to SOL
                 token_amount = trade['token_amount'] / 1e6  # Correct the token amount
@@ -78,15 +81,12 @@ class WalletScorer:
                 else:
                     trade_pnl = sol_amount * 0.99  # 卖出时，实际获得的 SOL 减少 1%
 
-                if mint not in token_balances:
-                    token_balances[mint] = 0
-                token_balances[mint] += token_amount if is_buy else -token_amount
+                mint_balance += token_amount if is_buy else -token_amount
 
                 if creator == wallet_address:
                     time_weight *= 1e-6  # 将创建者的惩罚权重设为 1e-6
-                    token_balances[mint] = 0
 
-                score += trade_pnl * time_weight
+                mint_score += trade_pnl * time_weight
 
                 if timestamp >= one_day_ago:
                     pnl_1d += trade_pnl
@@ -95,17 +95,27 @@ class WalletScorer:
                 if timestamp >= thirty_days_ago:
                     pnl_30d += trade_pnl
 
+            if mint_balance < -100:  # 检测到老鼠仓行为
+                rat_trade_count += 1
+                db.insert_mint_to_trade_fix(mint)
+                mint_score *= 0.1  # 对该代币的得分进行惩罚，而不是直接清零
+            
+            score += mint_score
+            token_balances[mint] = mint_balance
+
+        # 计算未实现的收益
         for mint, balance in token_balances.items():
             if balance > 0:
                 last_trade = db.get_last_trade_for_mint(mint)
                 if last_trade:
-                    last_trade_token_amount = last_trade['token_amount'] / 1e6  # Correct the token amount
+                    last_trade_token_amount = last_trade['token_amount'] / 1e6
                     last_trade_sol_amount = last_trade['sol_amount'] / 1e9
                     token_value = (balance / last_trade_token_amount) * last_trade_sol_amount
                     score += token_value
-            elif balance < -100: # 卖的比买的多，为老鼠仓
-                db.insert_mint_to_trade_fix(mint)
-                score = 0
+
+        # 根据老鼠仓行为次数进行整体惩罚
+        rat_trade_penalty = min(1, rat_trade_count * 0.1)  # 每次老鼠仓行为增加10%的惩罚
+        score -= abs(score) * rat_trade_penalty
 
         return {
             'address': wallet_address,
@@ -113,7 +123,8 @@ class WalletScorer:
             '1d_pnl': pnl_1d,
             '7d_pnl': pnl_7d,
             '30d_pnl': pnl_30d,
-            'updatedAt': current_timestamp
+            'updatedAt': current_timestamp,
+            'rat_trade_count': rat_trade_count
         }
 
     def process_wallets(self, start_offset, end_offset):
