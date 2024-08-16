@@ -110,7 +110,8 @@ class WalletScorer:
                 if last_trade:
                     last_trade_token_amount = last_trade['token_amount'] / 1e6
                     last_trade_sol_amount = last_trade['sol_amount'] / 1e9
-                    token_value = (balance / last_trade_token_amount) * last_trade_sol_amount
+                    last_trade_time_weight = self.calculate_time_weight(last_trade['timestamp'], current_timestamp)
+                    token_value = (balance / last_trade_token_amount) * last_trade_sol_amount * last_trade_time_weight
                     score += token_value
 
         # 根据老鼠仓行为次数进行整体惩罚
