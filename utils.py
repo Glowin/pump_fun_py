@@ -98,11 +98,11 @@ class Utils:
             proxies = None
 
         retries = 0
-        max_retries = 3
+        max_retries = 1
         response = None  # Ensure response is defined
         while retries < max_retries:
             try:
-                response = requests.get(url, headers=headers, proxies=proxies, timeout=3)
+                response = requests.get(url, headers=headers, proxies=proxies, timeout=5)
                 response.raise_for_status()  # Check for HTTP errors
                 if response.status_code == 200:
                     break
@@ -245,7 +245,7 @@ class Utils:
             retries = 0
             while retries < max_retries:
                 try:
-                    response = requests.get(url, headers=headers, proxies=proxies, timeout=3)
+                    response = requests.get(url, headers=headers, proxies=proxies, timeout=5)
                     response.raise_for_status()  # Check for HTTP errors
                     break
                 except requests.exceptions.RequestException as e:
