@@ -9,3 +9,4 @@ rich
 python-telegram-bot[socks]
 aiohttp
 asyncio
+PyYAML
