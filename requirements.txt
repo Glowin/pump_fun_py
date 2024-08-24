@@ -10,3 +10,4 @@ python-telegram-bot[socks]
 aiohttp
 asyncio
 PyYAML
+fake_useragent

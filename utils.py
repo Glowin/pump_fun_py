@@ -7,6 +7,7 @@ from db import MySQLDatabase
 import asyncio
 from tg_bot import TelegramBot
 from datetime import datetime, timedelta
+from fake_useragent import UserAgent
 
 # Initialize the database connection
 db = MySQLDatabase()
@@ -85,7 +86,7 @@ class Utils:
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-site',
-            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+            'user-agent': Utils.get_random_ua(),  # Use random UA
         }
         if proxy and proxy != 'None':
             proxies = {
@@ -140,7 +141,7 @@ class Utils:
             'Sec-Fetch-Dest': 'empty',
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Site': 'cross-site',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'User-Agent': Utils.get_random_ua(),  # Use random UA
             'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
             'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"macOS"',
@@ -228,7 +229,7 @@ class Utils:
             'Origin': 'https://pump.fun',
             'Pragma': 'no-cache',
             'Referer': 'https://pump.fun/',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'User-Agent': self.get_random_ua(),  # Use random UA
         }
         for _ in range(trade_page):
             url = f'{URL_PREFIX}/trades/{mint}?limit={page_size}&offset={offset}'
@@ -367,3 +368,8 @@ User PNL: 1day: {self.format_pnl(wallet_data['1d_pnl'])} \| 7day: {self.format_p
                 time.sleep(retry_interval)
         print("Max retries reached. Transaction confirmation failed.")
         return None
+
+    @staticmethod
+    def get_random_ua():
+        ua = UserAgent()
+        return ua.random
