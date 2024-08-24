@@ -130,3 +130,11 @@ source myenv/bin/activate
 # 安装依赖环境
 pip3 install -r requirements.txt
 ```
+
+# TODO
+
+-[] 因为 coins 接口被下线了，需要重新找能获取某一个 coin 的最新的信息
+```python
+    def get_coin_data(mint_str, proxy):
+        url = f"{URL_PREFIX}/coins/{mint_str}"
+```
