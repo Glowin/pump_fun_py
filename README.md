@@ -118,3 +118,12 @@ CREATE TABLE pump_fun_trade (
     profile_image VARCHAR(255)
 );
 ```
+
+## 配置
+
+
+```bash
+# 配置 myenv 环境
+python3 -m venv myenv
+source myenv/bin/activate
+```
