@@ -23,33 +23,23 @@ def update_mint_trade_info(m_list, proxy_info):
         task = progress.add_task(f"[green]Processing mints... {proxy_info} success: {success_count}/{success_count+fail_count}, fail: {fail_count}/{success_count+fail_count}", total=len(m_list))
         utils = Utils()
         utils.load_smart_wallets()  # Ensure smart wallets are loaded
-        _d_b = MySQLDatabase()
-        _d_b.connect()
         for mint_info in m_list:
             mint, creator, symbol = mint_info['mint'], mint_info['creator'], mint_info['symbol']
-            coin_data = utils.get_coin_data(mint, proxy_info)
-            if coin_data is None:
-                fail_count += 1
-                progress.update(task, description=f"[green]Processing mints... {proxy_info} success: {success_count}/{success_count+fail_count}, fail: {fail_count}/{success_count+fail_count}")
-                progress.advance(task)
-                continue
             last_trade_timestamp = utils.get_trade_list(mint, creator, symbol, proxy=proxy_info)
             if last_trade_timestamp is None:
                 fail_count += 1
                 progress.update(task, description=f"[green]Processing mints... {proxy_info} success: {success_count}/{success_count+fail_count}, fail: {fail_count}/{success_count+fail_count}")
                 progress.advance(task)
                 continue
-            coin_data['last_trade_timestamp'] = last_trade_timestamp
-            _d_b.update_mint(coin_data)
             if last_trade_timestamp:
                 progress.console.print(f"[green]{symbol}[/] | {proxy_info} Successfully recorded trade data")
                 success_count += 1
             else:
                 progress.console.print(f"[deep_pink2]{symbol}[/] {mint} | {proxy_info} Failed.")
                 fail_count += 1
+                break
             progress.update(task, description=f"[green]Processing mints... {proxy_info} success: {success_count}/{success_count+fail_count}, fail: {fail_count}/{success_count+fail_count}")
             progress.advance(task)
-        _d_b.disconnect()
 
 if __name__ == '__main__':
     PROXY_BATCH_NUMBER = 10
