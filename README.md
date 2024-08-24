@@ -126,4 +126,7 @@ CREATE TABLE pump_fun_trade (
 # 配置 myenv 环境
 python3 -m venv myenv
 source myenv/bin/activate
+
+# 安装依赖环境
+pip3 install -r requirements.txt
 ```
