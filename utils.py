@@ -292,8 +292,9 @@ class Utils:
 
         # Check for smart wallet trades
         messages = []
+        current_time = datetime.utcnow().timestamp()
         for trade in trade_list:
-            if trade['user'] in self.smart_wallets:
+            if trade['user'] in self.smart_wallets and current_time - trade['timestamp'] <= 3600:
                 # Insert the smart trade into the database
                 smart_trade_data = {
                     'signature': trade['signature'],
