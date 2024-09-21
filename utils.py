@@ -233,7 +233,7 @@ class Utils:
             'User-Agent': self.get_random_ua(),  # Use random UA
         }
         for _ in range(trade_page):
-            url = f'{URL_PREFIX}/trades/{mint}?limit={page_size}&offset={offset}'
+            url = f'{URL_PREFIX}/trades/all/{mint}?limit={page_size}&offset={offset}'
             if proxy and proxy != 'None':
                 proxies = {
                     'http': 'socks5h://' + proxy,
