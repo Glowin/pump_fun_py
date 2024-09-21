@@ -18,10 +18,11 @@ class Utils:
     def __init__(self):
         self.smart_wallets = {}
         self.load_smart_wallets()
+        self.smart_score = 70
 
     def load_smart_wallets(self):
         db.connect()
-        smart_wallets = db.get_smart_wallets()
+        smart_wallets = db.get_smart_wallets(self.smart_score)
         db.disconnect()
         for wallet in smart_wallets:
             self.smart_wallets[wallet['address']] = {

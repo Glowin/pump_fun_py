@@ -631,11 +631,11 @@ class MySQLDatabase:
         '''
         return self.execute_update(query)
 
-    def get_smart_wallets(self):
-        query = """
+    def get_smart_wallets(self, score):
+        query = f"""
         SELECT address, score, `1d_pnl`, `7d_pnl`, `30d_pnl`
         FROM pump_fun_address
-        WHERE score > 70
+        WHERE score > {score}
         """
         return self.execute_query(query)
     
