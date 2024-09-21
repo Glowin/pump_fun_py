@@ -17,8 +17,8 @@ URL_PREFIX = "https://frontend-api.pump.fun"
 class Utils:
     def __init__(self):
         self.smart_wallets = {}
-        self.load_smart_wallets()
         self.smart_score = 70
+        self.load_smart_wallets()
 
     def load_smart_wallets(self):
         db.connect()
