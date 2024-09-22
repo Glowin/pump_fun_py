@@ -271,25 +271,25 @@ class Utils:
         
         db.connect()
 
-        # 如果 creator rug 了，则记录到数据库中
-        creator_buy_token = sum(trade['token_amount'] for trade in trade_list if trade['user'] == creator and trade['is_buy'] == 1)
-        creator_sell_token = sum(trade['token_amount'] for trade in trade_list if trade['user'] == creator and trade['is_buy'] == 0)
-        # Generate a list of users who have made buy trades (is_buy = 1)
-        buy_users = set(trade['user'] for trade in trade_list if trade['is_buy'] == 1)
-        # Calculate the sum of token_amount for sell trades (is_buy = 0) where the user is not in the buy_user list
-        rat_sell_token = sum(trade['token_amount'] for trade in trade_list if trade['is_buy'] == 0 and trade['user'] not in buy_users)
-        if rat_sell_token > 0:            
-            # Print the result for verification
-            print(f"Total rat sell token amount: {rat_sell_token}")
-        if (creator_sell_token + rat_sell_token) > creator_buy_token * 0.5:
-            if rat_sell_token > creator_buy_token * 0.3:
-                db.update_rug_status(mint, 2)
-                print(f"{symbol} rug!!! RAT!!!")
-            else:
-                db.update_rug_status(mint, 1)
-                print(f"{symbol} rug!!!")
-        else:
-            db.update_rug_status(mint, 0)
+        # # 如果 creator rug 了，则记录到数据库中
+        # creator_buy_token = sum(trade['token_amount'] for trade in trade_list if trade['user'] == creator and trade['is_buy'] == 1)
+        # creator_sell_token = sum(trade['token_amount'] for trade in trade_list if trade['user'] == creator and trade['is_buy'] == 0)
+        # # Generate a list of users who have made buy trades (is_buy = 1)
+        # buy_users = set(trade['user'] for trade in trade_list if trade['is_buy'] == 1)
+        # # Calculate the sum of token_amount for sell trades (is_buy = 0) where the user is not in the buy_user list
+        # rat_sell_token = sum(trade['token_amount'] for trade in trade_list if trade['is_buy'] == 0 and trade['user'] not in buy_users)
+        # if rat_sell_token > 0:            
+        #     # Print the result for verification
+        #     print(f"Total rat sell token amount: {rat_sell_token}")
+        # if (creator_sell_token + rat_sell_token) > creator_buy_token * 0.5:
+        #     if rat_sell_token > creator_buy_token * 0.3:
+        #         db.update_rug_status(mint, 2)
+        #         print(f"{symbol} rug!!! RAT!!!")
+        #     else:
+        #         db.update_rug_status(mint, 1)
+        #         print(f"{symbol} rug!!!")
+        # else:
+        #     db.update_rug_status(mint, 0)
 
         # Check for smart wallet trades
         messages = []
