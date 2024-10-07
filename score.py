@@ -1,75 +1,193 @@
-from datetime import datetime, timedelta
-import numpy as np
+import math
+import time
 from db import MySQLDatabase
+from datetime import datetime, timedelta
+import multiprocessing
+import os
+import logging
 
-def calculate_wallet_pnl_and_score(wallet_address, db):
-    wallet_trades = db.get_wallet_trades(wallet_address)
-    if not wallet_trades:
-        return {'address': wallet_address, 'score': 0, '1d_pnl': 0, '7d_pnl': 0, '30d_pnl': 0}
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    total_score = 0
-    sol_balance = { '1d': 0, '7d': 0, '30d': 0, 'all': 0 }
-    current_time = datetime.now().timestamp()
+class WalletScorer:
+    def __init__(self):
+        self.lambda_param = 0.3  # 控制衰减速度
+        self.plateau_days = 7  # 最近7天保持高权重
+        self.high_frequency_threshold = 10  # 高频交易阈值，例如1分钟内超过10笔交易
+        self.high_frequency_time_threshold = 60  # 高频交易时间阈值，单位为秒
+        self.small_trade_threshold = 0.1  # 小额交易阈值，例如小于 0.1 SOL
 
-    # 时间范围
-    time_ranges = {
-        '1d': current_time - timedelta(days=1).total_seconds(),
-        '7d': current_time - timedelta(days=7).total_seconds(),
-        '30d': current_time - timedelta(days=30).total_seconds(),
-    }
-
-    for trade in wallet_trades:
-        is_creator = (trade['creator'] == wallet_address)
-
-        # 盈利计算
-        trade_value = trade['sol_amount'] / 1e9  # Assuming sol_amount is in lamports
-        if trade['is_buy']:
-            sol_balance['all'] -= trade_value * 1.01 # include pump.fun fee
+    def calculate_time_weight(self, trade_timestamp, current_timestamp):
+        days_passed = (current_timestamp - trade_timestamp) / 86400  # 转换为天数
+        
+        if days_passed <= self.plateau_days:
+            # 最近7天内的交易保持最高权重
+            return 1.0
         else:
-            sol_balance['all'] += trade_value * 0.99 # include pump.fun fee
+            # 7天后开始指数衰减
+            return math.exp(-self.lambda_param * (days_passed - self.plateau_days))
 
-        # 时间权重计算
-        time_diff = current_time - trade['timestamp']
-        time_weight = np.exp(-time_diff / (365 * 24 * 60 * 60))  # 按年衰减
+    def is_high_frequency_trading(self, trades):
+        if len(trades) < self.high_frequency_threshold:
+            return False
+        trades.sort(key=lambda x: x['timestamp'])
+        for i in range(len(trades) - self.high_frequency_threshold + 1):
+            if trades[i + self.high_frequency_threshold - 1]['timestamp'] - trades[i]['timestamp'] < self.high_frequency_time_threshold:
+                # 检查是否为小额交易
+                if all(trade['sol_amount'] / 1e9 < self.small_trade_threshold for trade in trades[i:i + self.high_frequency_threshold]):
+                    return True
+        return False
 
-        # Creator 影响计算
-        if is_creator:
-            trade_value *= 0.5  # 假设 creator 影响为50%
+    def calculate_score_and_pnl(self, wallet_address, db):
+        current_timestamp = int(time.time())
+        trades = db.get_wallet_trades(wallet_address)
+        if not trades:
+            return None
 
-        # 累加到总得分
-        total_score += sol_balance['all'] * time_weight
+        score = 0
+        pnl_1d = 0
+        pnl_7d = 0
+        pnl_30d = 0
+        token_balances = {}
+        rat_trade_count = 0  # 记录老鼠仓行为次数
 
-        # 分别计算1d, 7d, 30d的PNL
-        for period, start_time in time_ranges.items():
-            if trade['timestamp'] >= start_time:
-                if trade['is_buy']:
-                    sol_balance[period] -= trade_value * 1.01
+        one_day_ago = current_timestamp - 86400
+        seven_days_ago = current_timestamp - 604800
+        thirty_days_ago = current_timestamp - 2592000
+
+        trades_by_mint = {}
+        for trade in trades:
+            mint = trade['mint']
+            if mint not in trades_by_mint:
+                trades_by_mint[mint] = []
+            trades_by_mint[mint].append(trade)
+
+        for mint, mint_trades in trades_by_mint.items():
+            if self.is_high_frequency_trading(mint_trades):
+                continue
+
+            mint_score = 0
+            mint_balance = 0
+            for trade in mint_trades:
+                sol_amount = trade['sol_amount'] / 1e9  # Convert lamports to SOL
+                token_amount = trade['token_amount'] / 1e6  # Correct the token amount
+                is_buy = trade['is_buy']
+                timestamp = trade['timestamp']
+                creator = trade['creator']
+
+                time_weight = self.calculate_time_weight(timestamp, current_timestamp)
+
+                if is_buy:
+                    trade_pnl = -sol_amount * 1.01  # 买入时，实际花费的 SOL 增加 1%
                 else:
-                    sol_balance[period] += trade_value * 0.99
+                    trade_pnl = sol_amount * 0.99  # 卖出时，实际获得的 SOL 减少 1%
 
-    # 考虑未卖出的代币余额
-    total_score += sol_balance['all']
+                mint_balance += token_amount if is_buy else -token_amount
 
-    return {'address': wallet_address, 'score': total_score, '1d_pnl': sol_balance['1d'], '7d_pnl': sol_balance['7d'], '30d_pnl': sol_balance['30d'], 'updatedAt': int(current_time)}
+                if creator == wallet_address:
+                    time_weight *= 1e-6  # 将创建者的惩罚权重设为 1e-6
 
-if __name__ == '__main__':
+                mint_score += trade_pnl * time_weight
+
+                if timestamp >= one_day_ago:
+                    pnl_1d += trade_pnl
+                if timestamp >= seven_days_ago:
+                    pnl_7d += trade_pnl
+                if timestamp >= thirty_days_ago:
+                    pnl_30d += trade_pnl
+
+            if mint_balance < -100:  # 检测到老鼠仓行为
+                rat_trade_count += 1
+                db.insert_mint_to_trade_fix(mint)
+                mint_score *= 0.1  # 对该代币的得分进行惩罚，而不是直接清零
+            
+            score += mint_score
+            token_balances[mint] = mint_balance
+
+        # 计算未实现的收益
+        for mint, balance in token_balances.items():
+            if balance > 0:
+                last_trade = db.get_last_trade_for_mint(mint)
+                if last_trade:
+                    last_trade_token_amount = last_trade['token_amount'] / 1e6
+                    last_trade_sol_amount = last_trade['sol_amount'] / 1e9
+                    last_trade_time_weight = self.calculate_time_weight(last_trade['timestamp'], current_timestamp)
+                    token_value = (balance / last_trade_token_amount) * last_trade_sol_amount * last_trade_time_weight
+                    score += token_value
+
+        # 根据老鼠仓行为次数进行整体惩罚
+        rat_trade_penalty = min(1, rat_trade_count * 0.1)  # 每次老鼠仓行为增加10%的惩罚
+        score -= abs(score) * rat_trade_penalty
+
+        return {
+            'address': wallet_address,
+            'score': score,
+            '1d_pnl': pnl_1d,
+            '7d_pnl': pnl_7d,
+            '30d_pnl': pnl_30d,
+            'updatedAt': current_timestamp,
+            'rat_trade_count': rat_trade_count
+        }
+
+    def process_wallets(self, start_offset, end_offset):
+        db = MySQLDatabase()
+        db.connect()
+        
+        offset = start_offset
+        batch_size = 50000
+        
+        while offset < end_offset:
+            wallets = db.get_unique_wallet_addresses_batch(offset, batch_size)
+            if not wallets:
+                break
+
+            for wallet in wallets:
+                result = self.calculate_score_and_pnl(wallet['user'], db)
+                if result:
+                    print(str(result))
+                    db.upsert_wallet_score(result)
+
+            offset += batch_size
+
+        db.disconnect()
+
+def run_process(start_offset, end_offset):
+    scorer = WalletScorer()
+    scorer.process_wallets(start_offset, end_offset)
+
+def run_scoring_cycle():
     db = MySQLDatabase()
     db.connect()
-    
-    offset = 0
-    batch_size = 100
-    
-    while True:
-        wallet_addresses = db.get_unique_wallet_addresses_batch(offset, batch_size)
-        if not wallet_addresses:
-            break
-        
-        for wallet in wallet_addresses:
-            wallet_address = wallet['user']
-            result = calculate_wallet_pnl_and_score(wallet_address, db)
-            db.upsert_wallet_score(result)  # 计算后立即保存到数据库
-            print(str(result))
-
-        offset += batch_size
-
+    total_wallets = db.get_total_unique_wallets()
     db.disconnect()
+
+    num_processes = os.cpu_count()  # 获取CPU核心数
+    chunk_size = total_wallets // num_processes
+    
+    processes = []
+    for i in range(num_processes):
+        start_offset = i * chunk_size
+        end_offset = start_offset + chunk_size if i < num_processes - 1 else total_wallets
+        p = multiprocessing.Process(target=run_process, args=(start_offset, end_offset))
+        processes.append(p)
+        p.start()
+
+    for p in processes:
+        p.join()
+
+def main():
+    while True:
+        start_time = time.time()
+        logging.info("Starting a new scoring cycle")
+        
+        run_scoring_cycle()
+        
+        end_time = time.time()
+        duration = end_time - start_time
+        logging.info(f"Scoring cycle completed in {duration:.2f} seconds")
+        
+        wait_time = max(3600 - duration, 0)
+        logging.info(f"Waiting for {wait_time:.2f} seconds before starting next cycle")
+        time.sleep(wait_time)
+
+if __name__ == "__main__":
+    main()
