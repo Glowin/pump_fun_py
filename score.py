@@ -1,20 +1,21 @@
 import math
 import time
 from db import MySQLDatabase
-from datetime import datetime, timedelta
+import logging
+import argparse
 import multiprocessing
 import os
-import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class WalletScorer:
-    def __init__(self):
+    def __init__(self, time_window=2):
         self.lambda_param = 0.3  # 控制衰减速度
         self.plateau_days = 7  # 最近7天保持高权重
         self.high_frequency_threshold = 10  # 高频交易阈值，例如1分钟内超过10笔交易
         self.high_frequency_time_threshold = 60  # 高频交易时间阈值，单位为秒
         self.small_trade_threshold = 0.1  # 小额交易阈值，例如小于 0.1 SOL
+        self.time_window = time_window
 
     def calculate_time_weight(self, trade_timestamp, current_timestamp):
         days_passed = (current_timestamp - trade_timestamp) / 86400  # 转换为天数
@@ -150,24 +151,34 @@ class WalletScorer:
 
         db.disconnect()
 
-def run_process(start_offset, end_offset):
-    scorer = WalletScorer()
-    scorer.process_wallets(start_offset, end_offset)
-
-def run_scoring_cycle():
+def process_wallets(wallets, time_window):
     db = MySQLDatabase()
     db.connect()
-    total_wallets = db.get_total_unique_wallets()
+    scorer = WalletScorer(time_window)
+    
+    for wallet in wallets:
+        result = scorer.calculate_score_and_pnl(wallet['user'], db)
+        if result:
+            logging.info(f"Processed wallet: {result['address']}, Score: {result['score']}")
+            db.upsert_wallet_score(result)
+
     db.disconnect()
 
-    num_processes = os.cpu_count()  # 获取CPU核心数
-    chunk_size = total_wallets // num_processes
+def run_scoring_cycle(time_window):
+    db = MySQLDatabase()
+    db.connect()
+    active_wallets = db.get_recent_active_wallets(time_window)
+    db.disconnect()
+
+    num_processes = os.cpu_count()
+    chunk_size = len(active_wallets) // num_processes
     
     processes = []
     for i in range(num_processes):
-        start_offset = i * chunk_size
-        end_offset = start_offset + chunk_size if i < num_processes - 1 else total_wallets
-        p = multiprocessing.Process(target=run_process, args=(start_offset, end_offset))
+        start = i * chunk_size
+        end = start + chunk_size if i < num_processes - 1 else len(active_wallets)
+        wallet_chunk = active_wallets[start:end]
+        p = multiprocessing.Process(target=process_wallets, args=(wallet_chunk, time_window))
         processes.append(p)
         p.start()
 
@@ -175,11 +186,15 @@ def run_scoring_cycle():
         p.join()
 
 def main():
+    parser = argparse.ArgumentParser(description='Calculate wallet scores')
+    parser.add_argument('--time_window', type=int, default=2, help='Time window in hours for recent active wallets')
+    args = parser.parse_args()
+
     while True:
         start_time = time.time()
-        logging.info("Starting a new scoring cycle")
+        logging.info(f"Starting a new scoring cycle with {args.time_window} hour(s) time window")
         
-        run_scoring_cycle()
+        run_scoring_cycle(args.time_window)
         
         end_time = time.time()
         duration = end_time - start_time

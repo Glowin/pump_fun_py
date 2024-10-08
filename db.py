@@ -681,3 +681,11 @@ class MySQLDatabase:
         LIMIT %s
         """
         return self.execute_query(query, (limit,))
+
+    def get_recent_active_wallets(self, hours=2):
+        query = """
+        SELECT DISTINCT user
+        FROM pump_fun_trade
+        WHERE timestamp > UNIX_TIMESTAMP(NOW()) - %s * 3600
+        """
+        return self.execute_query(query, (hours,))
